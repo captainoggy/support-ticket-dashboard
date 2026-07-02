@@ -1,0 +1,12 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    globalSetup: ['./tests/global-setup.ts'],
+    setupFiles: ['./tests/setup.ts'],
+    // Test files share one database — run them sequentially so truncation
+    // in one file never races another.
+    fileParallelism: false,
+  },
+});
