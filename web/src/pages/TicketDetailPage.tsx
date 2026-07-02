@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useDeleteTicket, useTicket } from '../api/hooks';
 import { PriorityBadge, StatusBadge } from '../components/Badges';
+import { InlineText, InlineTextarea } from '../components/InlineEdit';
 import { PrioritySelect } from '../components/PrioritySelect';
 import { ErrorState } from '../components/States';
 import { StatusSelect } from '../components/StatusSelect';
@@ -82,8 +83,15 @@ export function TicketDetailPage() {
           ← {backLabel}
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-xl font-semibold">
-            <span className="text-ink-muted">#{ticket.id}</span> {ticket.title}
+          <h1 className="flex min-w-0 grow flex-wrap items-baseline gap-x-2 text-xl font-semibold">
+            <span className="text-ink-muted">#{ticket.id}</span>
+            <InlineText
+              ticketId={ticket.id}
+              field="title"
+              value={ticket.title}
+              label="Title"
+              inputClassName="text-xl font-semibold"
+            />
           </h1>
           <div className="flex items-center gap-2">
             <PriorityBadge priority={ticket.priority} />
@@ -100,19 +108,39 @@ export function TicketDetailPage() {
 
       <section aria-label="Description" className="rounded-xl border border-line bg-surface p-5 shadow-xs">
         <h2 className="text-sm font-medium text-ink-secondary">Description</h2>
-        <p className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed">{ticket.description}</p>
+        <InlineTextarea ticketId={ticket.id} value={ticket.description} label="Description" />
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <section aria-label="Customer" className="rounded-xl border border-line bg-surface p-5 shadow-xs">
           <h2 className="text-sm font-medium text-ink-secondary">Customer</h2>
-          <p className="mt-2 font-medium">{ticket.customerName}</p>
-          <a
-            href={`mailto:${ticket.customerEmail}`}
-            className="mt-0.5 block break-all text-sm text-accent hover:text-accent-strong hover:underline"
-          >
-            {ticket.customerEmail}
-          </a>
+          <div className="mt-2">
+            <InlineText
+              ticketId={ticket.id}
+              field="customerName"
+              value={ticket.customerName}
+              label="Customer name"
+              buttonClassName="font-medium"
+              inputClassName="text-sm font-medium"
+            />
+          </div>
+          <InlineText
+            ticketId={ticket.id}
+            field="customerEmail"
+            value={ticket.customerEmail}
+            label="Customer email"
+            trigger="icon"
+            buttonClassName="mt-0.5"
+            inputClassName="text-sm"
+            display={
+              <a
+                href={`mailto:${ticket.customerEmail}`}
+                className="block break-all text-sm text-accent hover:text-accent-strong hover:underline"
+              >
+                {ticket.customerEmail}
+              </a>
+            }
+          />
         </section>
 
         <section aria-label="Actions" className="rounded-xl border border-line bg-surface p-5 shadow-xs">

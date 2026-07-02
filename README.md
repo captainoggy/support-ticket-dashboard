@@ -38,7 +38,7 @@ The app opens on a sign-in page; use a demo account from the table above (creden
 - Ticket list with status/priority badges, customer, and relative created date
 - Create-ticket form with field-level validation on both client and server, using the same zod schema. New tickets always start `open`
 - Status updates via an accessible select on the list, detail page, and board, with optimistic UI, rollback on failure, and toast feedback; priority can be re-triaged from the ticket page the same way
-- Ticket detail view with full description, customer info, and timestamps
+- Ticket detail view with full description, customer info, and timestamps; title, description, and customer fields edit in place (Jira-style: click to edit, Enter/blur saves single-line fields, Escape cancels, description uses explicit Save/Cancel), validated by the same shared schema
 - Filtering by status and priority
 
 **Beyond core**
@@ -53,7 +53,7 @@ The app opens on a sign-in page; use a demo account from the table above (creden
 - OpenAPI docs (Swagger UI) at `/api/docs`
 - Health endpoint, request logging (pino), helmet (CSP relaxed only for Swagger UI), CORS allowlist, login rate limiting, env validation at boot, pagination caps, graceful shutdown, non-root API container
 - Responsive: the table collapses to cards on mobile and board columns stack
-- CI: lint + typecheck + 33 tests + production build on every push
+- CI: lint + typecheck + 36 tests + production build on every push
 
 ## Local development
 
@@ -75,12 +75,12 @@ Open http://localhost:5173. The Vite dev server proxies `/api` and `/socket.io` 
 ```bash
 npm test            # API suite + UI suite
 npm run test -w server   # 27 API tests (needs the db container running)
-npm run test -w web      # 6 UI tests (MSW-mocked, no services needed)
+npm run test -w web      # 9 UI tests (MSW-mocked, no services needed)
 ```
 
 The API suite runs against a **separate database** (`ticketdash_test`, created automatically by `docker/postgres-init.sql`) and truncates between tests, so it never touches dev data. In CI the same suite runs against a Postgres service container.
 
-What's covered: every ticket endpoint rejecting unauthenticated requests with 401, board ranking (new tickets on top, reorder persisting, cross-column drop saving status and position together), rejected invalid input with per-field details (missing title, bad email, unknown status, empty PATCH), successful create persisting with forced `open` status, status updates persisting, filtering/search/sorting/pagination semantics, stats aggregation, login success/failure, password change (auth required, wrong current password, too-short new password, old password invalidated), the full 401/403/204 RBAC ladder on delete, list rendering from API data, loading/empty/error/retry states, optimistic status change with toast, and form validation including mapping server-side field errors back onto inputs.
+What's covered: every ticket endpoint rejecting unauthenticated requests with 401, board ranking (new tickets on top, reorder persisting, cross-column drop saving status and position together), rejected invalid input with per-field details (missing title, bad email, unknown status, empty PATCH), successful create persisting with forced `open` status, status updates persisting, filtering/search/sorting/pagination semantics, stats aggregation, login success/failure, password change (auth required, wrong current password, too-short new password, old password invalidated), the full 401/403/204 RBAC ladder on delete, list rendering from API data, loading/empty/error/retry states, optimistic status change with toast, inline editing (title save on Enter, invalid email blocked, Escape discarding a description draft), and form validation including mapping server-side field errors back onto inputs.
 
 ## Project structure
 

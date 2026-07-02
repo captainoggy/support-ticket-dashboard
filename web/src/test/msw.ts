@@ -39,6 +39,17 @@ export const handlers = [
   http.get('/api/tickets/stats', () =>
     HttpResponse.json({ open: 1, inProgress: 1, resolved: 0, highPriorityOpen: 1 }),
   ),
+  http.get('/api/tickets/:id', ({ params }) => {
+    const ticket = fixtureTickets.find((t) => t.id === Number(params.id));
+    return ticket ? HttpResponse.json(ticket) : new HttpResponse(null, { status: 404 });
+  }),
+  http.patch('/api/tickets/:id', async ({ request, params }) => {
+    const ticket = fixtureTickets.find((t) => t.id === Number(params.id));
+    if (!ticket) return new HttpResponse(null, { status: 404 });
+    // Persist into the fixture so re-fetches after the optimistic update agree.
+    Object.assign(ticket, (await request.json()) as Partial<Ticket>);
+    return HttpResponse.json(ticket);
+  }),
 ];
 
 export const server = setupServer(...handlers);
