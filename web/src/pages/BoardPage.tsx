@@ -34,6 +34,14 @@ const COLUMN_DOTS: Record<TicketStatus, string> = {
   resolved: 'bg-status-resolved-dot',
 };
 
+// Each column carries its status color as a soft header band (same tokens as
+// the badges), keeping the body neutral so the cards stay the focus.
+const COLUMN_HEADERS: Record<TicketStatus, string> = {
+  open: 'bg-status-open-bg text-status-open-text',
+  in_progress: 'bg-status-progress-bg text-status-progress-text',
+  resolved: 'bg-status-resolved-bg text-status-resolved-text',
+};
+
 /** The board shows the top 100 tickets by rank; the list view paginates everything. */
 const BOARD_LIMIT = 100;
 
@@ -64,7 +72,9 @@ function BoardCard({ ticket, overlay = false }: { ticket: Ticket; overlay?: bool
       style={overlay ? undefined : { transform: CSS.Transform.toString(transform), transition }}
       aria-label={`Ticket #${ticket.id}: ${ticket.title}`}
       className={`rounded-lg border border-line bg-surface p-3 shadow-xs ${
-        overlay ? 'rotate-2 shadow-lg' : 'cursor-grab touch-none hover:border-ink-muted'
+        overlay
+          ? 'rotate-2 shadow-lg'
+          : 'cursor-grab touch-none transition-shadow hover:border-ink-muted hover:shadow-md'
       } ${isDragging ? 'opacity-40' : ''}`}
     >
       <Link
@@ -98,17 +108,23 @@ function Column({
   return (
     <section
       aria-label={`${STATUS_LABELS[status]} column, ${tickets.length} tickets`}
-      className="flex min-w-0 flex-col"
+      className={`flex min-w-0 flex-col overflow-hidden rounded-xl border shadow-xs transition-colors ${
+        highlighted ? 'border-accent' : 'border-line/70'
+      }`}
     >
-      <h2 className="flex items-center gap-2 px-1 text-sm font-medium text-ink-secondary">
+      <h2
+        className={`flex items-center gap-2 px-3 py-2.5 text-sm font-semibold ${COLUMN_HEADERS[status]}`}
+      >
         <span aria-hidden className={`size-2 rounded-full ${COLUMN_DOTS[status]}`} />
         {STATUS_LABELS[status]}
-        <span className="ms-auto rounded-full bg-line/70 px-2 py-0.5 text-xs">{tickets.length}</span>
+        <span className="ms-auto rounded-full bg-surface/70 px-2 py-0.5 text-xs font-semibold">
+          {tickets.length}
+        </span>
       </h2>
       <div
         ref={setNodeRef}
-        className={`mt-2 flex grow flex-col gap-2 rounded-xl border p-2 transition-colors ${
-          highlighted ? 'border-accent bg-status-progress-bg/40' : 'border-line/70 bg-page'
+        className={`flex grow flex-col gap-2 p-2 transition-colors ${
+          highlighted ? 'bg-status-progress-bg/40' : 'bg-page'
         }`}
       >
         <SortableContext items={tickets.map((t) => t.id)} strategy={verticalListSortingStrategy}>
@@ -118,7 +134,7 @@ function Column({
         </SortableContext>
         {tickets.length === 0 && (
           <p className="grid h-24 place-items-center rounded-lg border border-dashed border-line text-sm text-ink-secondary">
-            No tickets
+            No tickets yet. Drag one here.
           </p>
         )}
       </div>
