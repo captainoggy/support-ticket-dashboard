@@ -179,6 +179,25 @@ export const openapiSpec = {
         },
       },
     },
+    '/api/auth/change-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Change the signed-in user’s password (verifies the current one)',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ChangePasswordRequest' },
+            },
+          },
+        },
+        responses: {
+          '204': { description: 'Password changed' },
+          '400': errorResponse('Wrong current password or invalid new password'),
+          '401': errorResponse('Missing or invalid token'),
+        },
+      },
+    },
     '/api/auth/me': {
       get: {
         tags: ['Auth'],
@@ -267,6 +286,14 @@ export const openapiSpec = {
           password: { type: 'string', example: 'demo1234' },
         },
         required: ['email', 'password'],
+      },
+      ChangePasswordRequest: {
+        type: 'object',
+        properties: {
+          currentPassword: { type: 'string' },
+          newPassword: { type: 'string', minLength: 8, maxLength: 100 },
+        },
+        required: ['currentPassword', 'newPassword'],
       },
       LoginResponse: {
         type: 'object',

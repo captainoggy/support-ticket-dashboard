@@ -108,6 +108,16 @@ export const LoginSchema = z.object({
 
 export type LoginInput = z.infer<typeof LoginSchema>;
 
+export const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'New password must be at least 8 characters')
+    .max(100, 'New password must be at most 100 characters'),
+});
+
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>;
+
 export type UserRole = 'AGENT' | 'ADMIN';
 
 export interface AuthUser {

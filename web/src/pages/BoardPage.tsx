@@ -249,12 +249,20 @@ export function BoardPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold">Board</h1>
-        <p className="mt-1 text-sm text-ink-secondary">
-          Drag tickets between columns to update their status, or within a column to reorder
-          {query.data.meta.total > BOARD_LIMIT && ` (showing the top ${BOARD_LIMIT})`}.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">Board</h1>
+          <p className="mt-1 text-sm text-ink-secondary">
+            Drag tickets between columns to update their status, or within a column to reorder
+            {query.data.meta.total > BOARD_LIMIT && ` (showing the top ${BOARD_LIMIT})`}.
+          </p>
+        </div>
+        <Link
+          to="/tickets/new"
+          className="shrink-0 rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-white shadow-xs hover:bg-accent-strong"
+        >
+          New ticket
+        </Link>
       </div>
 
       <DndContext

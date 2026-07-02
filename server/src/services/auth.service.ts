@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import type { LoginResponse } from '@ticketdash/shared';
 import { config } from '../config.js';
 import { prisma } from '../db.js';
-import { UnauthorizedError } from '../errors.js';
+import { ApiError, UnauthorizedError } from '../errors.js';
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
@@ -20,4 +20,16 @@ export async function login(email: string, password: string): Promise<LoginRespo
     token,
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
   };
+}
+
+export async function changePassword(userId: number, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+    // 400 with a field detail so the form can put the error on the right input.
+    throw new ApiError(400, 'Validation failed', [
+      { field: 'currentPassword', message: 'Current password is incorrect' },
+    ]);
+  }
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 }

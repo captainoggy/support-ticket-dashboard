@@ -79,6 +79,56 @@ describe('GET /api/auth/me', () => {
   });
 });
 
+describe('POST /api/auth/change-password', () => {
+  it('requires authentication', async () => {
+    const response = await request(app)
+      .post('/api/auth/change-password')
+      .send({ currentPassword: 'demo1234', newPassword: 'brand-new-pass' });
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects a wrong current password with a field error, accepts the right one', async () => {
+    const token = await login('agent@demo.dev');
+
+    const wrong = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'not-my-password', newPassword: 'brand-new-pass' });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.details).toEqual([
+      { field: 'currentPassword', message: 'Current password is incorrect' },
+    ]);
+
+    const ok = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'demo1234', newPassword: 'brand-new-pass' });
+    expect(ok.status).toBe(204);
+
+    // The old password no longer works; the new one does.
+    const oldLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'agent@demo.dev', password: 'demo1234' });
+    expect(oldLogin.status).toBe(401);
+    const newLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'agent@demo.dev', password: 'brand-new-pass' });
+    expect(newLogin.status).toBe(200);
+  });
+
+  it('rejects a too-short new password', async () => {
+    const token = await login('agent@demo.dev');
+    const response = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'demo1234', newPassword: 'short' });
+    expect(response.status).toBe(400);
+    expect(response.body.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: 'newPassword' })]),
+    );
+  });
+});
+
 describe('DELETE /api/tickets/:id (admin only)', () => {
   it('is denied anonymously (401) and for agents (403), allowed for admins (204)', async () => {
     const id = await createTicket();

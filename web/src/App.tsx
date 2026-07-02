@@ -3,8 +3,10 @@ import type { ReactNode } from 'react';
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { SESSION_EXPIRED_EVENT } from './api/client';
 import { useToast } from './components/Toast';
+import { UserMenu } from './components/UserMenu';
 import { useAuth } from './context/AuthContext';
 import { BoardPage } from './pages/BoardPage';
+import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { NewTicketPage } from './pages/NewTicketPage';
 import { TicketDetailPage } from './pages/TicketDetailPage';
@@ -72,32 +74,10 @@ export function App() {
           )}
           <div className="ms-auto flex items-center gap-3">
             {user ? (
-              <>
-                <span className="hidden text-sm text-ink-secondary sm:inline">
-                  {user.name}
-                  <span className="ms-1.5 rounded-full bg-line/70 px-2 py-0.5 text-xs">
-                    {user.role === 'ADMIN' ? 'Admin' : 'Agent'}
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="text-sm font-medium text-ink-secondary hover:text-ink"
-                >
-                  Sign out
-                </button>
-              </>
+              <UserMenu user={user} onSignOut={logout} />
             ) : (
               <Link to="/login" className="text-sm font-medium text-ink-secondary hover:text-ink">
                 Sign in
-              </Link>
-            )}
-            {user && (
-              <Link
-                to="/tickets/new"
-                className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-white shadow-xs hover:bg-accent-strong"
-              >
-                New ticket
               </Link>
             )}
           </div>
@@ -110,6 +90,7 @@ export function App() {
           <Route path="/board" element={<RequireAuth><BoardPage /></RequireAuth>} />
           <Route path="/tickets/new" element={<RequireAuth><NewTicketPage /></RequireAuth>} />
           <Route path="/tickets/:id" element={<RequireAuth><TicketDetailPage /></RequireAuth>} />
+          <Route path="/account/password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
           <Route path="/login" element={<LoginPage />} />
         </Routes>
       </main>

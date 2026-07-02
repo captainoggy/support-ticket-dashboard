@@ -17,7 +17,7 @@ Then open **http://localhost:8080**. The stack boots Postgres, applies migration
 | Admin | `admin@demo.dev` | `demo1234` | everything, incl. deleting tickets |
 | Agent | `agent@demo.dev` | `demo1234` | everything except delete |
 
-The app opens on a sign-in page; use a demo account from the table above (credentials are deliberately documented only here, never in the UI). Like Jira or Trello, every ticket operation (viewing, creating, updating, filtering) requires a signed-in user; deleting additionally requires the admin role.
+The app opens on a sign-in page; use a demo account from the table above (credentials are deliberately documented only here, never in the UI). Like Jira or Trello, every ticket operation (viewing, creating, updating, filtering) requires a signed-in user; deleting additionally requires the admin role. Passwords can be changed from the avatar menu; restarting the stack resets the demo passwords (the seed upserts them on boot).
 
 ## Technologies
 
@@ -48,11 +48,12 @@ The app opens on a sign-in page; use a demo account from the table above (creden
 - Filters, search, sort, and page are synced to the URL, so they survive a refresh, work with the back button, and can be shared
 - Live updates over WebSocket: two open tabs stay in sync (the socket authenticates with the same JWT as the API)
 - Role-based access on top of auth: `DELETE /api/tickets/:id` is admin-only (401 / 403 / 204)
+- Avatar account menu (initials, identity summary, keyboard + click-outside dismissal) with a working change-password flow: current password verified server-side, field-level errors mapped back onto the form
 - Expired sessions are caught on the first 401: the app signs you out and returns you to the login page with a message
 - OpenAPI docs (Swagger UI) at `/api/docs`
 - Health endpoint, request logging (pino), helmet (CSP relaxed only for Swagger UI), CORS allowlist, login rate limiting, env validation at boot, pagination caps, graceful shutdown, non-root API container
 - Responsive: the table collapses to cards on mobile and board columns stack
-- CI: lint + typecheck + 30 tests + production build on every push
+- CI: lint + typecheck + 33 tests + production build on every push
 
 ## Local development
 
@@ -73,13 +74,13 @@ Open http://localhost:5173. The Vite dev server proxies `/api` and `/socket.io` 
 
 ```bash
 npm test            # API suite + UI suite
-npm run test -w server   # 24 API tests (needs the db container running)
+npm run test -w server   # 27 API tests (needs the db container running)
 npm run test -w web      # 6 UI tests (MSW-mocked, no services needed)
 ```
 
 The API suite runs against a **separate database** (`ticketdash_test`, created automatically by `docker/postgres-init.sql`) and truncates between tests, so it never touches dev data. In CI the same suite runs against a Postgres service container.
 
-What's covered: every ticket endpoint rejecting unauthenticated requests with 401, board ranking (new tickets on top, reorder persisting, cross-column drop saving status and position together), rejected invalid input with per-field details (missing title, bad email, unknown status, empty PATCH), successful create persisting with forced `open` status, status updates persisting, filtering/search/sorting/pagination semantics, stats aggregation, login success/failure, the full 401/403/204 RBAC ladder on delete, list rendering from API data, loading/empty/error/retry states, optimistic status change with toast, and form validation including mapping server-side field errors back onto inputs.
+What's covered: every ticket endpoint rejecting unauthenticated requests with 401, board ranking (new tickets on top, reorder persisting, cross-column drop saving status and position together), rejected invalid input with per-field details (missing title, bad email, unknown status, empty PATCH), successful create persisting with forced `open` status, status updates persisting, filtering/search/sorting/pagination semantics, stats aggregation, login success/failure, password change (auth required, wrong current password, too-short new password, old password invalidated), the full 401/403/204 RBAC ladder on delete, list rendering from API data, loading/empty/error/retry states, optimistic status change with toast, and form validation including mapping server-side field errors back onto inputs.
 
 ## Project structure
 
@@ -102,6 +103,7 @@ POST   /api/tickets          create: validated, status forced to "open" (201)
 PATCH  /api/tickets/:id      partial update incl. status and board position (400 / 404)
 DELETE /api/tickets/:id      admin only (403 for agents / 204)
 POST   /api/auth/login       public: JWT for a seeded demo user
+POST   /api/auth/change-password  verifies current password (204 / 400 / 401)
 GET    /api/auth/me          current user
 GET    /api/health           public: liveness + DB connectivity
 GET    /api/docs             Swagger UI (spec at /api/openapi.json)
