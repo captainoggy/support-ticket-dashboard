@@ -5,6 +5,8 @@ interface StatTile {
   label: string;
   value: number;
   dotClass: string;
+  /** Fill used while the tile's filter is active — same tokens as badges/columns. */
+  activeClass: string;
   active: boolean;
   onClick: () => void;
 }
@@ -42,6 +44,7 @@ export function StatRow({
       label: 'Open',
       value: data.open,
       dotClass: 'bg-status-open-dot',
+      activeClass: 'border-status-open-dot/60 bg-status-open-bg text-status-open-text',
       active: activeStatus === 'open' && !activePriority,
       onClick: () => onFilter(activeStatus === 'open' && !activePriority ? null : 'open', null),
     },
@@ -50,6 +53,7 @@ export function StatRow({
       label: 'In progress',
       value: data.inProgress,
       dotClass: 'bg-status-progress-dot',
+      activeClass: 'border-status-progress-dot/60 bg-status-progress-bg text-status-progress-text',
       active: activeStatus === 'in_progress',
       onClick: () => onFilter(activeStatus === 'in_progress' ? null : 'in_progress', null),
     },
@@ -58,6 +62,7 @@ export function StatRow({
       label: 'Resolved',
       value: data.resolved,
       dotClass: 'bg-status-resolved-dot',
+      activeClass: 'border-status-resolved-dot/60 bg-status-resolved-bg text-status-resolved-text',
       active: activeStatus === 'resolved',
       onClick: () => onFilter(activeStatus === 'resolved' ? null : 'resolved', null),
     },
@@ -66,6 +71,7 @@ export function StatRow({
       label: 'High priority open',
       value: data.highPriorityOpen,
       dotClass: 'bg-priority-high-dot',
+      activeClass: 'border-priority-high-dot/60 bg-priority-high-bg text-priority-high-text',
       active: activeStatus === 'open' && activePriority === 'high',
       onClick: () =>
         activeStatus === 'open' && activePriority === 'high'
@@ -82,11 +88,15 @@ export function StatRow({
           type="button"
           onClick={tile.onClick}
           aria-pressed={tile.active}
-          className={`rounded-xl border bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-ink-muted ${
-            tile.active ? 'border-accent ring-1 ring-accent' : 'border-line'
+          className={`rounded-xl border px-4 py-3 text-left shadow-xs transition-colors ${
+            tile.active ? tile.activeClass : 'border-line bg-surface hover:border-ink-muted'
           }`}
         >
-          <span className="flex items-center gap-1.5 text-sm text-ink-secondary">
+          <span
+            className={`flex items-center gap-1.5 text-sm ${
+              tile.active ? 'text-inherit' : 'text-ink-secondary'
+            }`}
+          >
             <span aria-hidden className={`size-2 rounded-full ${tile.dotClass}`} />
             {tile.label}
           </span>
