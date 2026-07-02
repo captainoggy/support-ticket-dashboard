@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum values are lowercase so the database, the Prisma client, and the JSON
+// API all share the exact same representation — no mapping layer anywhere.
+// Postgres orders enums by definition order, so `ORDER BY priority` is
+// semantic (low < medium < high), not alphabetical.
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+enum UserRole {
+  AGENT
+  ADMIN
+}
+
+model Ticket {
+  id            Int            @id @default(autoincrement())
+  title         String         @db.VarChar(200)
+  description   String
+  customerName  String         @db.VarChar(120)
+  customerEmail String         @db.VarChar(254)
+  status        TicketStatus   @default(open)
+  priority      TicketPriority
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(254)
+  passwordHash String
+  name         String   @db.VarChar(120)
+  role         UserRole @default(AGENT)
+  createdAt    DateTime @default(now())
+}
