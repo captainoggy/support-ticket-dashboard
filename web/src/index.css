@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+
+/* Design tokens — validated palette (badge text/bg pairs all ≥ 4.5:1 on their tints). */
+@theme {
+  --color-page: #f9f9f7;
+  --color-surface: #fcfcfb;
+  --color-ink: #0b0b0b;
+  --color-ink-secondary: #52514e;
+  --color-ink-muted: #898781;
+  --color-line: #e1e0d9;
+  --color-accent: #2a78d6;
+  --color-accent-strong: #1c5cab;
+  --color-danger: #d03b3b;
+  --color-danger-strong: #8f1f1f;
+
+  /* status: open (amber) / in progress (blue) / resolved (green) */
+  --color-status-open-bg: #fdf0d3;
+  --color-status-open-text: #7a5300;
+  --color-status-open-dot: #fab219;
+  --color-status-progress-bg: #cde2fb;
+  --color-status-progress-text: #104281;
+  --color-status-progress-dot: #2a78d6;
+  --color-status-resolved-bg: #d9f2d9;
+  --color-status-resolved-text: #006300;
+  --color-status-resolved-dot: #0ca30c;
+
+  /* priority: low (neutral) / medium (orange) / high (red) */
+  --color-priority-low-bg: #f0efec;
+  --color-priority-low-text: #52514e;
+  --color-priority-low-dot: #898781;
+  --color-priority-medium-bg: #fbe3da;
+  --color-priority-medium-text: #93330f;
+  --color-priority-medium-dot: #ec835a;
+  --color-priority-high-bg: #fadddd;
+  --color-priority-high-text: #8f1f1f;
+  --color-priority-high-dot: #d03b3b;
+}
+
+body {
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* One consistent, visible focus indicator everywhere. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
