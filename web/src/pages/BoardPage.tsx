@@ -86,8 +86,10 @@ function BoardCard({
       aria-label={`Ticket #${ticket.id}: ${ticket.title}`}
       onClick={(event) => {
         // The whole card opens the ticket — but not the click the browser
-        // fires right after a drag, and not clicks the title link handles.
+        // fires right after a drag, not clicks the title link handles, and
+        // not modified clicks (new tab etc.), which belong to the browser.
         if (overlay || suppressClick?.current) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         if (event.target instanceof Element && event.target.closest('a')) return;
         navigate(`/tickets/${ticket.id}`, { state: { from } });
       }}

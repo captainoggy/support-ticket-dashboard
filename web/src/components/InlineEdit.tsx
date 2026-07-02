@@ -141,10 +141,12 @@ export function InlineText({
   }
 
   return (
+    // The value itself stays the accessible name (an aria-label would make
+    // screen readers announce "Edit title" instead of the actual title).
     <button
       ref={triggerRef}
       type="button"
-      aria-label={`Edit ${label.toLowerCase()}`}
+      title={`Edit ${label.toLowerCase()}`}
       onClick={start}
       className={`group -mx-1 inline-flex max-w-full items-center gap-1.5 rounded-md px-1 text-left hover:bg-line/40 ${buttonClassName}`}
     >
@@ -233,7 +235,7 @@ export function InlineTextarea({
     <button
       ref={triggerRef}
       type="button"
-      aria-label={`Edit ${label.toLowerCase()}`}
+      title={`Edit ${label.toLowerCase()}`}
       onClick={start}
       className="group -mx-1 mt-2 block w-full rounded-lg px-1 text-left hover:bg-line/40"
     >

@@ -90,6 +90,8 @@ export function TicketTable({
   // Carries the current URL (filters, page, sort) so "back" restores this view.
   const from = location.pathname + location.search;
   const openTicket = (event: React.MouseEvent, id: number) => {
+    // Leave modified clicks (new tab, selection) to the browser via the title link.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     if (isInteractive(event.target)) return;
     navigate(`/tickets/${id}`, { state: { from } });
   };

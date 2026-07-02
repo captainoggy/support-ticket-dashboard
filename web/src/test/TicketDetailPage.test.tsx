@@ -19,7 +19,9 @@ describe('TicketDetailPage inline editing', () => {
     renderDetail();
     await screen.findByText('Unable to complete payment');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Edit title' }));
+    // The editable title's accessible name is the title itself (a11y: the
+    // heading must read as the ticket title, not as "Edit title").
+    await userEvent.click(screen.getByRole('button', { name: /unable to complete payment/i }));
     const input = screen.getByRole('textbox', { name: 'Title' });
     await userEvent.clear(input);
     await userEvent.type(input, 'Payment declined at checkout{Enter}');
@@ -47,7 +49,7 @@ describe('TicketDetailPage inline editing', () => {
     renderDetail();
     await screen.findByText('Card declined on checkout.');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Edit description' }));
+    await userEvent.click(screen.getByRole('button', { name: /card declined on checkout/i }));
     const textarea = screen.getByRole('textbox', { name: 'Description' });
     await userEvent.clear(textarea);
     await userEvent.type(textarea, 'This should be discarded{Escape}');
