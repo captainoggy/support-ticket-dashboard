@@ -108,12 +108,14 @@ function Column({
   return (
     <section
       aria-label={`${STATUS_LABELS[status]} column, ${tickets.length} tickets`}
-      className={`flex min-w-0 flex-col overflow-hidden rounded-xl border shadow-xs transition-colors ${
+      className={`flex min-w-0 flex-col overflow-clip rounded-xl border shadow-xs transition-colors ${
         highlighted ? 'border-accent' : 'border-line/70'
       }`}
     >
+      {/* Sticks while scrolling a long column (overflow-clip on the container
+          keeps the rounded corners without breaking position: sticky). */}
       <h2
-        className={`flex items-center gap-2 px-3 py-2.5 text-sm font-semibold ${COLUMN_HEADERS[status]}`}
+        className={`sticky top-0 z-10 flex items-center gap-2 px-3 py-2.5 text-sm font-semibold ${COLUMN_HEADERS[status]}`}
       >
         <span aria-hidden className={`size-2 rounded-full ${COLUMN_DOTS[status]}`} />
         {STATUS_LABELS[status]}
