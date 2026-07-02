@@ -114,16 +114,14 @@ Errors are consistent JSON: `{ "error": "...", "details": [{ "field", "message" 
 
 ## Deployment (free tier)
 
-The repo ships a [render.yaml](render.yaml) blueprint that deploys both halves to Render's free tier, with the database on Neon (also free, and unlike Render's free Postgres it doesn't expire). The frontend reads an optional `VITE_API_URL` at build time; when unset (local dev, Docker), everything stays same-origin behind the proxy.
+Hosted as three free pieces: the frontend on **Vercel**, the API on **Render** (Dockerized, kept as a long-running service for WebSockets), and Postgres on **Neon** (unlike Render's free Postgres, it doesn't expire). The frontend reads `VITE_API_URL` at build time; when unset (local dev, Docker), everything stays same-origin behind the proxy. Config lives in [vercel.json](vercel.json) and [render.yaml](render.yaml).
 
 1. **Database (Neon)**: create a free project at neon.tech and copy the connection string (it already includes `sslmode=require`).
-2. **Render**: New → Blueprint → connect the GitHub repo. Render creates `ticketdash-api` (Docker) and `ticketdash-web` (static). `JWT_SECRET` is generated automatically.
-3. Set the remaining env vars in the dashboard, then redeploy both services:
-   - `ticketdash-api` → `DATABASE_URL` (the Neon string) and `CLIENT_ORIGINS` (the web service URL, e.g. `https://ticketdash-web.onrender.com`)
-   - `ticketdash-web` → `VITE_API_URL` (the API service URL, e.g. `https://ticketdash-api.onrender.com`)
-4. The API applies migrations and seeds demo data on boot; sign in with the demo users above.
+2. **API (Render)**: New → Blueprint → connect the repo. Render reads `render.yaml` and creates `ticketdash-api` (`JWT_SECRET` is generated automatically). Set `DATABASE_URL` to the Neon string and deploy; note the service URL (e.g. `https://ticketdash-api.onrender.com`). The API applies migrations and seeds demo data on first boot.
+3. **Frontend (Vercel)**: New Project → import the repo (keep the root directory as the repo root; `vercel.json` handles the monorepo build and SPA routing). Add an env var `VITE_API_URL` = the Render API URL, then deploy; note the Vercel URL (e.g. `https://<project>.vercel.app`).
+4. **Connect CORS**: back on Render, set `CLIENT_ORIGINS` to the Vercel URL and redeploy the API. Sign in with the demo users above.
 
-Free-tier caveat: the API sleeps after ~15 minutes idle, so the first request can take up to a minute to wake it. The frontend, being static, is always instant.
+Free-tier caveat: the Render API sleeps after ~15 minutes idle, so the first request can take up to a minute to wake it. The Vercel frontend is always instant and shows its loading state while the API wakes.
 
 ## Assumptions & trade-offs
 

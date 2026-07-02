@@ -1,11 +1,9 @@
-# Render Blueprint: one-click deploy of the API (Docker) and the static web app.
-# The database is external (Neon free tier) — Render's free Postgres expires
-# after 30 days, which is the wrong surprise mid-review.
+# Render Blueprint for the API (Docker). The frontend is hosted on Vercel and
+# the database on Neon (Render's own free Postgres expires after 30 days).
 #
-# After the first deploy, set the three `sync: false` values in the dashboard:
-#   ticketdash-api  → DATABASE_URL   (Neon connection string, sslmode=require)
-#                   → CLIENT_ORIGINS (the web service's https URL)
-#   ticketdash-web  → VITE_API_URL   (the API service's https URL)
+# After the first deploy, set the two `sync: false` values in the dashboard:
+#   DATABASE_URL    → Neon connection string (sslmode=require)
+#   CLIENT_ORIGINS  → the Vercel production URL (e.g. https://<project>.vercel.app)
 services:
   - type: web
     name: ticketdash-api
@@ -23,17 +21,3 @@ services:
         sync: false
       - key: CLIENT_ORIGINS
         sync: false
-
-  - type: web
-    name: ticketdash-web
-    runtime: static
-    buildCommand: npm ci && npm run build -w web
-    staticPublishPath: web/dist
-    envVars:
-      - key: VITE_API_URL
-        sync: false
-    routes:
-      # SPA fallback: client-side routes resolve to index.html.
-      - type: rewrite
-        source: /*
-        destination: /index.html
