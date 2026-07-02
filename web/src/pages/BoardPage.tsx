@@ -18,9 +18,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { MutableRefObject } from 'react';
 import type { Ticket, TicketStatus } from '@ticketdash/shared';
 import { STATUS_LABELS, TICKET_STATUSES } from '@ticketdash/shared';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useTickets, useUpdateTicket } from '../api/hooks';
 import { PriorityBadge } from '../components/Badges';
@@ -59,11 +60,23 @@ function columnOf(columns: ColumnMap, ticketId: number): TicketStatus | null {
   return TICKET_STATUSES.find((status) => columns[status].includes(ticketId)) ?? null;
 }
 
-function BoardCard({ ticket, overlay = false }: { ticket: Ticket; overlay?: boolean }) {
+function BoardCard({
+  ticket,
+  overlay = false,
+  suppressClick,
+}: {
+  ticket: Ticket;
+  overlay?: boolean;
+  suppressClick?: MutableRefObject<boolean>;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: ticket.id,
     disabled: overlay,
   });
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Lets the detail page send the visitor back here instead of to the list.
+  const from = location.pathname + location.search;
 
   return (
     <div
@@ -71,14 +84,22 @@ function BoardCard({ ticket, overlay = false }: { ticket: Ticket; overlay?: bool
       {...(overlay ? {} : { ...listeners, ...attributes })}
       style={overlay ? undefined : { transform: CSS.Transform.toString(transform), transition }}
       aria-label={`Ticket #${ticket.id}: ${ticket.title}`}
+      onClick={(event) => {
+        // The whole card opens the ticket — but not the click the browser
+        // fires right after a drag, and not clicks the title link handles.
+        if (overlay || suppressClick?.current) return;
+        if (event.target instanceof Element && event.target.closest('a')) return;
+        navigate(`/tickets/${ticket.id}`, { state: { from } });
+      }}
       className={`rounded-lg border border-line bg-surface p-3 shadow-xs ${
         overlay
           ? 'rotate-2 shadow-lg'
-          : 'cursor-grab touch-none transition-shadow hover:border-ink-muted hover:shadow-md'
+          : 'cursor-pointer touch-none transition-shadow hover:border-ink-muted hover:shadow-md active:cursor-grabbing'
       } ${isDragging ? 'opacity-40' : ''}`}
     >
       <Link
         to={`/tickets/${ticket.id}`}
+        state={{ from }}
         className="text-sm font-medium leading-snug text-ink hover:text-accent-strong hover:underline"
         onPointerDown={(event) => event.stopPropagation()}
       >
@@ -97,11 +118,13 @@ function Column({
   status,
   tickets,
   isDropTarget,
+  suppressClick,
 }: {
   status: TicketStatus;
   tickets: Ticket[];
   /** True while the dragged card is previewed in this column. */
   isDropTarget: boolean;
+  suppressClick: MutableRefObject<boolean>;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const highlighted = isOver || isDropTarget;
@@ -131,7 +154,7 @@ function Column({
       >
         <SortableContext items={tickets.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tickets.map((ticket) => (
-            <BoardCard key={ticket.id} ticket={ticket} />
+            <BoardCard key={ticket.id} ticket={ticket} suppressClick={suppressClick} />
           ))}
         </SortableContext>
         {tickets.length === 0 && (
@@ -153,6 +176,8 @@ export function BoardPage() {
   // over another column opens a real gap where it will land.
   const [dragColumns, setDragColumns] = useState<ColumnMap | null>(null);
   const crossedColumns = useRef(false);
+  // Blocks the synthetic click the browser fires on the card right after a drag.
+  const suppressClick = useRef(false);
 
   const sensors = useSensors(
     // distance keeps plain clicks working (links stay clickable)
@@ -174,12 +199,18 @@ export function BoardPage() {
   const resetDrag = () => {
     setActiveTicket(null);
     setDragColumns(null);
+    // The post-drag click fires before this timeout runs, so it gets blocked;
+    // ordinary clicks (no drag ever started) are unaffected.
+    window.setTimeout(() => {
+      suppressClick.current = false;
+    }, 0);
   };
 
   const onDragStart = (event: DragStartEvent) => {
     setActiveTicket(ticketById.get(Number(event.active.id)) ?? null);
     setDragColumns(deriveColumns(tickets));
     crossedColumns.current = false;
+    suppressClick.current = true;
   };
 
   /** Reparent the dragged card into the hovered column (preview only). */
@@ -321,6 +352,7 @@ export function BoardPage() {
               key={status}
               status={status}
               isDropTarget={status === activeColumn}
+              suppressClick={suppressClick}
               tickets={columns[status]
                 .map((id) => ticketById.get(id))
                 .filter((t): t is Ticket => Boolean(t))}

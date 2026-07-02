@@ -1,5 +1,5 @@
 import type { Ticket, TicketSortField } from '@ticketdash/shared';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { formatAbsolute, formatRelative } from '../lib/format';
 import { PriorityBadge, StatusBadge } from './Badges';
 import { StatusSelect } from './StatusSelect';
@@ -86,9 +86,12 @@ export function TicketTable({
   onSort: (sort: string) => void;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Carries the current URL (filters, page, sort) so "back" restores this view.
+  const from = location.pathname + location.search;
   const openTicket = (event: React.MouseEvent, id: number) => {
     if (isInteractive(event.target)) return;
-    navigate(`/tickets/${id}`);
+    navigate(`/tickets/${id}`, { state: { from } });
   };
 
   return (
@@ -117,6 +120,7 @@ export function TicketTable({
                 <td className="max-w-md px-4 py-3">
                   <Link
                     to={`/tickets/${ticket.id}`}
+                    state={{ from }}
                     className="font-medium text-ink hover:text-accent-strong hover:underline"
                   >
                     <span className="text-ink-muted">#{ticket.id}</span> {ticket.title}
@@ -148,6 +152,7 @@ export function TicketTable({
           >
             <Link
               to={`/tickets/${ticket.id}`}
+              state={{ from }}
               className="font-medium text-ink hover:text-accent-strong hover:underline"
             >
               <span className="text-ink-muted">#{ticket.id}</span> {ticket.title}

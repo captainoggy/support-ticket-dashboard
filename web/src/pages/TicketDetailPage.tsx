@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useDeleteTicket, useTicket } from '../api/hooks';
 import { PriorityBadge, StatusBadge } from '../components/Badges';
@@ -14,7 +14,12 @@ export function TicketDetailPage() {
   const { id: rawId } = useParams();
   const id = Number(rawId);
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
+  // Go back to wherever the visitor came from (board, or the list with its
+  // filters intact); direct links and refreshes fall back to the list.
+  const backTo = (location.state as { from?: string } | null)?.from ?? '/';
+  const backLabel = backTo.startsWith('/board') ? 'Back to board' : 'Back to tickets';
   const { user } = useAuth();
   const query = useTicket(id);
   const deleteTicket = useDeleteTicket();
@@ -43,10 +48,10 @@ export function TicketDetailPage() {
             <p className="text-base font-medium">Ticket #{id} doesn’t exist</p>
             <p className="mt-1 text-sm text-ink-secondary">It may have been deleted.</p>
             <Link
-              to="/"
+              to={backTo}
               className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-strong"
             >
-              Back to tickets
+              {backLabel}
             </Link>
           </div>
         ) : (
@@ -62,7 +67,7 @@ export function TicketDetailPage() {
     deleteTicket.mutate(ticket.id, {
       onSuccess: () => {
         toast.push('success', `Ticket #${ticket.id} deleted`);
-        navigate('/');
+        navigate(backTo);
       },
       onError: (error) =>
         toast.push('error', error instanceof ApiError ? error.message : 'Could not delete ticket'),
@@ -73,8 +78,8 @@ export function TicketDetailPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
-        <Link to="/" className="text-sm text-ink-secondary hover:text-ink">
-          ← Back to tickets
+        <Link to={backTo} className="text-sm text-ink-secondary hover:text-ink">
+          ← {backLabel}
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <h1 className="text-xl font-semibold">
