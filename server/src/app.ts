@@ -15,9 +15,17 @@ import { ticketsRouter } from './routes/tickets.routes.js';
 export function createApp() {
   const app = express();
 
-  // CSP is disabled because Swagger UI relies on inline scripts; everything else
-  // helmet sets (nosniff, frame denial, etc.) stays on.
-  app.use(helmet({ contentSecurityPolicy: false }));
+  // One proxy hop (nginx) sets X-Forwarded-For, so req.ip — which the login
+  // rate limiter keys on — is the real client address.
+  app.set('trust proxy', 1);
+
+  // Swagger UI relies on inline scripts, so CSP is relaxed for /api/docs only;
+  // every other route gets helmet's full default set.
+  const standardHelmet = helmet();
+  const docsHelmet = helmet({ contentSecurityPolicy: false });
+  app.use((req, res, next) =>
+    req.path.startsWith('/api/docs') ? docsHelmet(req, res, next) : standardHelmet(req, res, next),
+  );
   app.use(cors({ origin: config.clientOrigins }));
   app.use(express.json({ limit: '100kb' }));
   if (config.env !== 'test') {

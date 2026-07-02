@@ -1,3 +1,6 @@
+# Local demo stack. The credentials below are throwaway development values —
+# deploying this file anywhere public requires replacing POSTGRES_PASSWORD and
+# JWT_SECRET (the API refuses to boot in production without a real JWT_SECRET).
 services:
   db:
     image: postgres:16-alpine

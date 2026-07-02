@@ -36,10 +36,13 @@ model Ticket {
   customerEmail String         @db.VarChar(254)
   status        TicketStatus   @default(open)
   priority      TicketPriority
+  // Manual rank on the Kanban board (lower = higher in the column). A float so
+  // a drop between two cards is one write: the midpoint of its new neighbours.
+  position      Float          @default(0)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  @@index([status])
+  @@index([status, position])
   @@index([priority])
   @@index([createdAt])
 }

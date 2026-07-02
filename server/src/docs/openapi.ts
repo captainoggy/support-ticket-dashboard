@@ -16,6 +16,11 @@ const ticketProperties = {
   customerEmail: { type: 'string', format: 'email', example: 'jane@example.com' },
   status: { type: 'string', enum: ['open', 'in_progress', 'resolved'], example: 'open' },
   priority: { type: 'string', enum: ['low', 'medium', 'high'], example: 'high' },
+  position: {
+    type: 'number',
+    description: 'Board rank within a status column (lower = higher up)',
+    example: 3.5,
+  },
   createdAt: { type: 'string', format: 'date-time' },
   updatedAt: { type: 'string', format: 'date-time' },
 } as const;
@@ -42,6 +47,8 @@ export const openapiSpec = {
       'Live changes are also broadcast over socket.io as ticket:created / ticket:updated / ticket:deleted events.',
   },
   servers: [{ url: '/', description: 'Current host' }],
+  // All ticket endpoints require a bearer token; login and health opt out below.
+  security: [{ bearerAuth: [] }],
   tags: [
     { name: 'Tickets' },
     { name: 'Auth' },
@@ -64,7 +71,11 @@ export const openapiSpec = {
           {
             name: 'sortBy',
             in: 'query',
-            schema: { type: 'string', enum: ['createdAt', 'priority', 'title'], default: 'createdAt' },
+            schema: {
+              type: 'string',
+              enum: ['createdAt', 'priority', 'title', 'status', 'position'],
+              default: 'createdAt',
+            },
           },
           { name: 'sortDir', in: 'query', schema: { type: 'string', enum: ['asc', 'desc'], default: 'desc' } },
           { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
@@ -142,7 +153,6 @@ export const openapiSpec = {
       delete: {
         tags: ['Tickets'],
         summary: 'Delete a ticket (admin role required)',
-        security: [{ bearerAuth: [] }],
         responses: {
           '204': { description: 'Ticket deleted' },
           '401': errorResponse('Missing or invalid token'),
@@ -155,6 +165,7 @@ export const openapiSpec = {
       post: {
         tags: ['Auth'],
         summary: 'Log in with a seeded demo user',
+        security: [],
         requestBody: {
           required: true,
           content: { 'application/json': { schema: { $ref: '#/components/schemas/LoginRequest' } } },
@@ -172,7 +183,6 @@ export const openapiSpec = {
       get: {
         tags: ['Auth'],
         summary: 'Current authenticated user',
-        security: [{ bearerAuth: [] }],
         responses: {
           '200': { description: 'The user embedded in the token' },
           '401': errorResponse('Missing or invalid token'),
@@ -183,6 +193,7 @@ export const openapiSpec = {
       get: {
         tags: ['Meta'],
         summary: 'Liveness/readiness check including database connectivity',
+        security: [],
         responses: {
           '200': { description: 'API and database are healthy' },
           '503': { description: 'Database unreachable' },
@@ -221,6 +232,7 @@ export const openapiSpec = {
           customerEmail: ticketProperties.customerEmail,
           priority: ticketProperties.priority,
           status: ticketProperties.status,
+          position: ticketProperties.position,
         },
         minProperties: 1,
       },

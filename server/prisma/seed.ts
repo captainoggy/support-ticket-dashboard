@@ -202,6 +202,9 @@ async function main() {
         customerEmail: t.customerEmail,
         status: t.status,
         priority: t.priority,
+        // Board rank: the array is ordered newest-first, so the index puts
+        // recent tickets at the top of their columns.
+        position: i,
         createdAt,
         // In-progress/resolved tickets were touched after creation.
         updatedAt: t.status === 'open' ? createdAt : new Date(createdAt.getTime() + 6 * HOUR + i),

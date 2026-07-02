@@ -46,7 +46,12 @@ export function getTicketById(id: number): Promise<Ticket | null> {
 
 export function createTicket(input: CreateTicketInput): Promise<Ticket> {
   // Status is intentionally not accepted from the client: new tickets are always open.
-  return prisma.ticket.create({ data: { ...input, status: 'open' } });
+  return prisma.$transaction(async (tx) => {
+    const created = await tx.ticket.create({ data: { ...input, status: 'open' } });
+    // -id: each new ticket ranks above everything before it (lower position =
+    // higher in the column), so it appears at the top of the Open column.
+    return tx.ticket.update({ where: { id: created.id }, data: { position: -created.id } });
+  });
 }
 
 export function updateTicket(id: number, input: UpdateTicketInput): Promise<Ticket> {

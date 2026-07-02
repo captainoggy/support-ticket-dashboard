@@ -41,7 +41,11 @@ export const CreateTicketSchema = z.object({
 
 /** Partial update — any editable field, but at least one. Status changes ride this too. */
 export const UpdateTicketSchema = CreateTicketSchema.partial()
-  .extend({ status: StatusSchema.optional() })
+  .extend({
+    status: StatusSchema.optional(),
+    // Board rank (lower = higher in the column); set when a card is dragged.
+    position: z.number().finite().optional(),
+  })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Provide at least one field to update',
   });
@@ -49,7 +53,7 @@ export const UpdateTicketSchema = CreateTicketSchema.partial()
 export type CreateTicketInput = z.infer<typeof CreateTicketSchema>;
 export type UpdateTicketInput = z.infer<typeof UpdateTicketSchema>;
 
-export const TICKET_SORT_FIELDS = ['createdAt', 'priority', 'title'] as const;
+export const TICKET_SORT_FIELDS = ['createdAt', 'priority', 'title', 'status', 'position'] as const;
 export type TicketSortField = (typeof TICKET_SORT_FIELDS)[number];
 
 export const ListTicketsQuerySchema = z.object({
@@ -73,6 +77,7 @@ export interface Ticket {
   customerEmail: string;
   status: TicketStatus;
   priority: TicketPriority;
+  position: number;
   createdAt: string;
   updatedAt: string;
 }

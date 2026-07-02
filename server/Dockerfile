@@ -17,5 +17,8 @@ COPY server server
 ENV NODE_ENV=development
 EXPOSE 4000
 
+# Run as the unprivileged node user; nothing here needs root at runtime.
+USER node
+
 # Apply migrations and (idempotently) seed on boot, then start the API.
 CMD ["sh", "-c", "npx -w server prisma migrate deploy && npm run -w server db:seed && npm run -w server start"]

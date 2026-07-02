@@ -3,6 +3,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app';
 import { prisma } from '../src/db';
+import { authHeader } from './helpers';
 
 const app = createApp();
 
@@ -24,7 +25,7 @@ async function login(email: string): Promise<string> {
 }
 
 async function createTicket(): Promise<number> {
-  const response = await request(app).post('/api/tickets').send({
+  const response = await request(app).post('/api/tickets').set(authHeader()).send({
     title: 'Delete me',
     description: 'Ticket used by the RBAC tests.',
     customerName: 'Sam Doe',
@@ -97,6 +98,6 @@ describe('DELETE /api/tickets/:id (admin only)', () => {
     ).toBe(204);
 
     // Actually gone.
-    expect((await request(app).get(`/api/tickets/${id}`)).status).toBe(404);
+    expect((await request(app).get(`/api/tickets/${id}`).set(authHeader())).status).toBe(404);
   });
 });
