@@ -1,0 +1,34 @@
+{
+  "name": "support-ticket-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Support ticket dashboard — React + Express + PostgreSQL monorepo",
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w web",
+    "test": "npm run test -w server && npm run test -w web",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w web",
+    "format": "prettier --write .",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "npm run db:migrate -w server",
+    "db:seed": "npm run db:seed -w server"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
