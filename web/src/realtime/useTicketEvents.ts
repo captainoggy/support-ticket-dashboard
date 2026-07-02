@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { ticketKeys } from '../api/hooks';
-import { getStoredToken } from '../api/client';
+import { API_BASE, getStoredToken } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -18,11 +18,13 @@ export function useTicketEvents() {
 
   useEffect(() => {
     if (!user) return;
-    const socket = io({
-      transports: ['websocket'],
+    const options = {
+      transports: ['websocket'] as ['websocket'],
       reconnectionDelayMax: 5000,
       auth: { token: getStoredToken() },
-    });
+    };
+    // Same origin by default; a cross-origin API (VITE_API_URL) is dialed directly.
+    const socket = API_BASE ? io(API_BASE, options) : io(options);
     const refresh = () => queryClient.invalidateQueries({ queryKey: ticketKeys.all });
     socket.on('ticket:created', refresh);
     socket.on('ticket:updated', refresh);

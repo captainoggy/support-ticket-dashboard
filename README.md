@@ -112,6 +112,19 @@ WS     socket.io             ticket:created / ticket:updated / ticket:deleted (J
 
 Errors are consistent JSON: `{ "error": "...", "details": [{ "field", "message" }] }`. Validation failures return 400 with per-field messages, missing resources 404, auth failures 401/403, and unexpected errors a logged 500 with no stack leak.
 
+## Deployment (free tier)
+
+The repo ships a [render.yaml](render.yaml) blueprint that deploys both halves to Render's free tier, with the database on Neon (also free, and unlike Render's free Postgres it doesn't expire). The frontend reads an optional `VITE_API_URL` at build time; when unset (local dev, Docker), everything stays same-origin behind the proxy.
+
+1. **Database (Neon)**: create a free project at neon.tech and copy the connection string (it already includes `sslmode=require`).
+2. **Render**: New → Blueprint → connect the GitHub repo. Render creates `ticketdash-api` (Docker) and `ticketdash-web` (static). `JWT_SECRET` is generated automatically.
+3. Set the remaining env vars in the dashboard, then redeploy both services:
+   - `ticketdash-api` → `DATABASE_URL` (the Neon string) and `CLIENT_ORIGINS` (the web service URL, e.g. `https://ticketdash-web.onrender.com`)
+   - `ticketdash-web` → `VITE_API_URL` (the API service URL, e.g. `https://ticketdash-api.onrender.com`)
+4. The API applies migrations and seeds demo data on boot; sign in with the demo users above.
+
+Free-tier caveat: the API sleeps after ~15 minutes idle, so the first request can take up to a minute to wake it. The frontend, being static, is always instant.
+
 ## Assumptions & trade-offs
 
 - **PostgreSQL over SQLite** (the brief allows either): ticket data is relational, and its obvious growth path (users, comments, assignments, audit history) is relational too. SQLite is single-writer and file-bound, which breaks at the first moment of real concurrency, and Prisma doesn't support enums on SQLite, so the schema I actually wanted (real `status`/`priority` enum types, which Postgres also orders semantically for sorting) wouldn't even be expressible. Docker Compose cancels out SQLite's zero-setup advantage, since the reviewer runs one command either way.
@@ -130,7 +143,7 @@ Errors are consistent JSON: `{ "error": "...", "details": [{ "field", "message" 
 
 - Ticket comments and a status-change audit trail (the strongest reason the schema is relational)
 - E2E tests (Playwright) driving the browser through create, update, and refresh persistence
-- httpOnly-cookie sessions with refresh-token rotation
+- httpOnly-cookie sessions with refresh-token rotation; invalidate existing JWTs on password change (token versioning)
 - Per-column pagination/virtualization on the board and bulk actions on the list
 - Periodic renormalization of board positions (rewrite a column's ranks to integers)
 - Ticket assignment to agents, email notifications, saved filter views

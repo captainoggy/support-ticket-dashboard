@@ -18,6 +18,13 @@ export class ApiError extends Error {
 
 export const AUTH_STORAGE_KEY = 'ticketdash.auth';
 
+/**
+ * Base URL of the API. Empty in local dev and the Docker stack (same origin,
+ * proxied); set VITE_API_URL at build time when the frontend is deployed
+ * separately from the API (e.g. static host + Render service).
+ */
+export const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
 /** Fired when a request that carried a token comes back 401: the session is stale. */
 export const SESSION_EXPIRED_EVENT = 'ticketdash:session-expired';
 
@@ -32,7 +39,7 @@ export function getStoredToken(): string | null {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getStoredToken();
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
