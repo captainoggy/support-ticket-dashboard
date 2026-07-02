@@ -1,4 +1,8 @@
-import { Link, NavLink, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { SESSION_EXPIRED_EVENT } from './api/client';
+import { useToast } from './components/Toast';
 import { useAuth } from './context/AuthContext';
 import { BoardPage } from './pages/BoardPage';
 import { LoginPage } from './pages/LoginPage';
@@ -6,6 +10,16 @@ import { NewTicketPage } from './pages/NewTicketPage';
 import { TicketDetailPage } from './pages/TicketDetailPage';
 import { TicketListPage } from './pages/TicketListPage';
 import { useTicketEvents } from './realtime/useTicketEvents';
+
+/** All ticket views require sign-in; remember where the visitor was headed. */
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  }
+  return <>{children}</>;
+}
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
   return `rounded-lg px-3 py-1.5 text-sm font-medium ${
@@ -15,7 +29,19 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 
 export function App() {
   const { user, logout } = useAuth();
+  const toast = useToast();
   useTicketEvents();
+
+  // The API client clears the stored token on an expired-session 401; this
+  // resets the React auth state so the route guard sends the user to sign in.
+  useEffect(() => {
+    const onExpired = () => {
+      logout();
+      toast.push('error', 'Your session has expired. Please sign in again.');
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+  }, [logout, toast]);
 
   return (
     <div className="min-h-screen">
@@ -34,14 +60,16 @@ export function App() {
             </span>
             Support Desk
           </Link>
-          <nav aria-label="Main" className="flex items-center gap-1">
-            <NavLink to="/" end className={navLinkClass}>
-              Tickets
-            </NavLink>
-            <NavLink to="/board" className={navLinkClass}>
-              Board
-            </NavLink>
-          </nav>
+          {user && (
+            <nav aria-label="Main" className="flex items-center gap-1">
+              <NavLink to="/" end className={navLinkClass}>
+                Tickets
+              </NavLink>
+              <NavLink to="/board" className={navLinkClass}>
+                Board
+              </NavLink>
+            </nav>
+          )}
           <div className="ms-auto flex items-center gap-3">
             {user ? (
               <>
@@ -64,22 +92,24 @@ export function App() {
                 Sign in
               </Link>
             )}
-            <Link
-              to="/tickets/new"
-              className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-white shadow-xs hover:bg-accent-strong"
-            >
-              New ticket
-            </Link>
+            {user && (
+              <Link
+                to="/tickets/new"
+                className="rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-white shadow-xs hover:bg-accent-strong"
+              >
+                New ticket
+              </Link>
+            )}
           </div>
         </div>
       </header>
 
       <main id="main" className="mx-auto max-w-6xl px-4 py-6">
         <Routes>
-          <Route path="/" element={<TicketListPage />} />
-          <Route path="/board" element={<BoardPage />} />
-          <Route path="/tickets/new" element={<NewTicketPage />} />
-          <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          <Route path="/" element={<RequireAuth><TicketListPage /></RequireAuth>} />
+          <Route path="/board" element={<RequireAuth><BoardPage /></RequireAuth>} />
+          <Route path="/tickets/new" element={<RequireAuth><NewTicketPage /></RequireAuth>} />
+          <Route path="/tickets/:id" element={<RequireAuth><TicketDetailPage /></RequireAuth>} />
           <Route path="/login" element={<LoginPage />} />
         </Routes>
       </main>

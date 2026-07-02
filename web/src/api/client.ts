@@ -18,6 +18,9 @@ export class ApiError extends Error {
 
 export const AUTH_STORAGE_KEY = 'ticketdash.auth';
 
+/** Fired when a request that carried a token comes back 401: the session is stale. */
+export const SESSION_EXPIRED_EVENT = 'ticketdash:session-expired';
+
 export function getStoredToken(): string | null {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -39,6 +42,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (response.status === 204) return undefined as T;
+
+  // A 401 on a request that carried a token means the token expired or was
+  // revoked. Clear the session once (parallel failures skip the re-dispatch).
+  if (response.status === 401 && token && getStoredToken()) {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  }
 
   const body = await response.json().catch(() => null);
   if (!response.ok) {

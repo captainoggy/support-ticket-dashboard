@@ -1,5 +1,5 @@
-import type { Ticket } from '@ticketdash/shared';
-import { Link } from 'react-router-dom';
+import type { Ticket, TicketSortField } from '@ticketdash/shared';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatAbsolute, formatRelative } from '../lib/format';
 import { PriorityBadge, StatusBadge } from './Badges';
 import { StatusSelect } from './StatusSelect';
@@ -12,24 +12,108 @@ function CreatedAt({ iso }: { iso: string }) {
   );
 }
 
+const HEADERS: Array<{ label: string; field: TicketSortField }> = [
+  { label: 'Ticket', field: 'title' },
+  { label: 'Priority', field: 'priority' },
+  { label: 'Status', field: 'status' },
+  { label: 'Created', field: 'createdAt' },
+];
+
+function SortArrow({ direction, active }: { direction: 'asc' | 'desc'; active: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 8 5"
+      aria-hidden
+      className={`size-2 ${direction === 'asc' ? '' : 'rotate-180'} ${
+        active ? 'text-accent' : 'text-ink-muted'
+      }`}
+      fill="currentColor"
+    >
+      <path d="M4 0 8 5H0z" />
+    </svg>
+  );
+}
+
+function SortableHeader({
+  label,
+  field,
+  sort,
+  onSort,
+}: {
+  label: string;
+  field: TicketSortField;
+  sort: string;
+  onSort: (sort: string) => void;
+}) {
+  const [sortBy, sortDir] = sort.split(':');
+  const active = sortBy === field;
+  const nextDir = active && sortDir === 'asc' ? 'desc' : 'asc';
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
+      className="px-4 py-3"
+    >
+      <button
+        type="button"
+        onClick={() => onSort(`${field}:${nextDir}`)}
+        title={`Sort by ${label.toLowerCase()} (${nextDir === 'asc' ? 'ascending' : 'descending'})`}
+        className="group flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-secondary hover:text-ink"
+      >
+        {label}
+        <span className="flex flex-col gap-px">
+          <SortArrow direction="asc" active={active && sortDir === 'asc'} />
+          <SortArrow direction="desc" active={active && sortDir === 'desc'} />
+        </span>
+      </button>
+    </th>
+  );
+}
+
+/** Clicks on links, buttons and selects inside a row must not open the ticket. */
+function isInteractive(target: EventTarget): boolean {
+  return target instanceof Element && Boolean(target.closest('a, button, select, input, label'));
+}
+
 /** Table on desktop, cards on mobile — same data, responsive main flow. */
-export function TicketTable({ tickets }: { tickets: Ticket[] }) {
+export function TicketTable({
+  tickets,
+  sort,
+  onSort,
+}: {
+  tickets: Ticket[];
+  sort: string;
+  onSort: (sort: string) => void;
+}) {
+  const navigate = useNavigate();
+  const openTicket = (event: React.MouseEvent, id: number) => {
+    if (isInteractive(event.target)) return;
+    navigate(`/tickets/${id}`);
+  };
+
   return (
     <>
       {/* Desktop */}
-      <div className="hidden overflow-hidden rounded-xl border border-line bg-surface shadow-xs md:block">
+      {/* overflow-clip (not -hidden) keeps the rounded corners without creating
+          a scroll container, so the sticky header can track the viewport. */}
+      <div className="hidden overflow-clip rounded-xl border border-line bg-surface shadow-xs md:block">
         <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-line text-xs font-medium uppercase tracking-wide text-ink-secondary">
-              <th scope="col" className="px-4 py-3">Ticket</th>
-              <th scope="col" className="px-4 py-3">Priority</th>
-              <th scope="col" className="px-4 py-3">Status</th>
-              <th scope="col" className="px-4 py-3">Created</th>
+          {/* border-collapse borders don't move with sticky cells; the inset
+              shadow is the header's bottom border. */}
+          <thead className="sticky top-0 z-10 bg-surface [box-shadow:inset_0_-1px_0_var(--color-line)]">
+            <tr>
+              {HEADERS.map((header) => (
+                <SortableHeader key={header.field} {...header} sort={sort} onSort={onSort} />
+              ))}
             </tr>
           </thead>
           <tbody>
             {tickets.map((ticket) => (
-              <tr key={ticket.id} className="border-b border-line/60 last:border-b-0 hover:bg-page/60">
+              <tr
+                key={ticket.id}
+                onClick={(event) => openTicket(event, ticket.id)}
+                className="cursor-pointer border-b border-line/60 last:border-b-0 hover:bg-page/60"
+              >
                 <td className="max-w-md px-4 py-3">
                   <Link
                     to={`/tickets/${ticket.id}`}
@@ -57,7 +141,11 @@ export function TicketTable({ tickets }: { tickets: Ticket[] }) {
       {/* Mobile */}
       <ul className="space-y-3 md:hidden">
         {tickets.map((ticket) => (
-          <li key={ticket.id} className="rounded-xl border border-line bg-surface p-4 shadow-xs">
+          <li
+            key={ticket.id}
+            onClick={(event) => openTicket(event, ticket.id)}
+            className="cursor-pointer rounded-xl border border-line bg-surface p-4 shadow-xs"
+          >
             <Link
               to={`/tickets/${ticket.id}`}
               className="font-medium text-ink hover:text-accent-strong hover:underline"

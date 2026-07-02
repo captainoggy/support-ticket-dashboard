@@ -1,13 +1,12 @@
 import { useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { TICKET_SORT_FIELDS } from '@ticketdash/shared';
 import { useTickets } from '../api/hooks';
 import { FilterBar } from '../components/FilterBar';
-import { Pagination } from '../components/Pagination';
+import { PAGE_SIZES, Pagination } from '../components/Pagination';
 import { StatRow } from '../components/StatRow';
 import { EmptyState, ErrorState, ListSkeleton } from '../components/States';
 import { TicketTable } from '../components/TicketTable';
-
-const PAGE_SIZE = 10;
 
 /**
  * Filter/search/sort/page state lives in the URL: refresh-proof, back-button
@@ -19,8 +18,18 @@ export function TicketListPage() {
   const status = searchParams.get('status') ?? '';
   const priority = searchParams.get('priority') ?? '';
   const q = searchParams.get('q') ?? '';
-  const sort = searchParams.get('sort') ?? 'createdAt:desc';
+  // A hand-edited ?sort= the API would reject falls back to the default
+  // instead of wedging the list in an error state.
+  const requestedSort = searchParams.get('sort') ?? '';
+  const [requestedBy, requestedDir] = requestedSort.split(':');
+  const sort =
+    (TICKET_SORT_FIELDS as readonly string[]).includes(requestedBy) &&
+    (requestedDir === 'asc' || requestedDir === 'desc')
+      ? requestedSort
+      : 'createdAt:desc';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const requestedSize = Number(searchParams.get('pageSize'));
+  const pageSize = (PAGE_SIZES as readonly number[]).includes(requestedSize) ? requestedSize : 10;
   const [sortBy, sortDir] = sort.split(':');
 
   const applyParams = useCallback(
@@ -48,7 +57,7 @@ export function TicketListPage() {
     sortBy,
     sortDir,
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
   });
 
   const hasFilters = Boolean(status || priority || q);
@@ -110,9 +119,17 @@ export function TicketListPage() {
           aria-busy={query.isFetching}
           className={query.isFetching ? 'opacity-70 transition-opacity' : 'transition-opacity'}
         >
-          <TicketTable tickets={query.data.data} />
+          <TicketTable
+            tickets={query.data.data}
+            sort={sort}
+            onSort={(next) => applyParams({ sort: next })}
+          />
           <div className="mt-4">
-            <Pagination meta={query.data.meta} onPage={(next) => applyParams({ page: String(next) }, { resetPage: false })} />
+            <Pagination
+              meta={query.data.meta}
+              onPage={(next) => applyParams({ page: String(next) }, { resetPage: false })}
+              onPageSize={(size) => applyParams({ pageSize: size === 10 ? null : String(size) })}
+            />
           </div>
         </div>
       )}

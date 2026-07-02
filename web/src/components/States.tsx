@@ -10,6 +10,23 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
+export function BoardSkeleton() {
+  return (
+    <div role="status" aria-label="Loading board" className="grid gap-4 md:grid-cols-3">
+      {Array.from({ length: 3 }, (_, column) => (
+        <div key={column}>
+          <div className="h-5 w-28 animate-pulse rounded bg-line/60" />
+          <div className="mt-2 space-y-2 rounded-xl border border-line/70 bg-page p-2">
+            {Array.from({ length: 3 - (column % 2) }, (_, card) => (
+              <div key={card} className="h-24 animate-pulse rounded-lg bg-line/60" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-14 text-center">

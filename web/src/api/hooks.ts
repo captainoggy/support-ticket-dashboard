@@ -87,14 +87,22 @@ export function useUpdateTicket() {
       });
       const previousDetail = queryClient.getQueryData<Ticket>(ticketKeys.detail(id));
 
-      queryClient.setQueriesData<TicketListResponse>({ queryKey: ticketKeys.lists() }, (old) =>
-        old
-          ? {
-              ...old,
-              data: old.data.map((t) => (t.id === id ? { ...t, ...input } : t)),
-            }
-          : old,
-      );
+      // Merge the change into every cached list; when a list is filtered by a
+      // field the update just changed, drop the ticket from it instead of
+      // showing a row that no longer matches the filter.
+      for (const [key, old] of previousLists) {
+        if (!old) continue;
+        const params = key[2] as TicketListParams | undefined;
+        const leavesFilter =
+          (input.status && params?.status && input.status !== params.status) ||
+          (input.priority && params?.priority && input.priority !== params.priority);
+        queryClient.setQueryData<TicketListResponse>(key, {
+          ...old,
+          data: leavesFilter
+            ? old.data.filter((t) => t.id !== id)
+            : old.data.map((t) => (t.id === id ? { ...t, ...input } : t)),
+        });
+      }
       if (previousDetail) {
         queryClient.setQueryData<Ticket>(ticketKeys.detail(id), { ...previousDetail, ...input });
       }

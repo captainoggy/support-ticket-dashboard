@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useDeleteTicket, useTicket } from '../api/hooks';
 import { PriorityBadge, StatusBadge } from '../components/Badges';
+import { PrioritySelect } from '../components/PrioritySelect';
 import { ErrorState } from '../components/States';
 import { StatusSelect } from '../components/StatusSelect';
 import { useToast } from '../components/Toast';
@@ -110,9 +111,19 @@ export function TicketDetailPage() {
         </section>
 
         <section aria-label="Actions" className="rounded-xl border border-line bg-surface p-5 shadow-xs">
-          <h2 className="text-sm font-medium text-ink-secondary">Update status</h2>
-          <div className="mt-2">
-            <StatusSelect ticketId={ticket.id} status={ticket.status} ticketTitle={ticket.title} />
+          <div className="flex flex-wrap gap-5">
+            <div>
+              <h2 className="text-sm font-medium text-ink-secondary">Status</h2>
+              <div className="mt-2">
+                <StatusSelect ticketId={ticket.id} status={ticket.status} ticketTitle={ticket.title} />
+              </div>
+            </div>
+            <div>
+              <h2 className="text-sm font-medium text-ink-secondary">Priority</h2>
+              <div className="mt-2">
+                <PrioritySelect ticketId={ticket.id} priority={ticket.priority} ticketTitle={ticket.title} />
+              </div>
+            </div>
           </div>
           {user?.role === 'ADMIN' && (
             <button

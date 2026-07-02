@@ -6,7 +6,10 @@ export const SORT_OPTIONS = [
   { value: 'createdAt:asc', label: 'Oldest first' },
   { value: 'priority:desc', label: 'Priority: high → low' },
   { value: 'priority:asc', label: 'Priority: low → high' },
+  { value: 'status:asc', label: 'Status: open → resolved' },
+  { value: 'status:desc', label: 'Status: resolved → open' },
   { value: 'title:asc', label: 'Title A → Z' },
+  { value: 'title:desc', label: 'Title Z → A' },
 ] as const;
 
 const selectClass =
