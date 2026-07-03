@@ -3,6 +3,7 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
+  MeasuringStrategy,
   MouseSensor,
   TouchSensor,
   closestCenter,
@@ -366,6 +367,11 @@ export function BoardPage() {
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}
+        // Re-measure drop targets while dragging: the preview reparents cards
+        // between columns, so drag-start geometry goes stale immediately.
+        measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        // Engage horizontal auto-pan only near the edge; y keeps the default.
+        autoScroll={{ threshold: { x: 0.15, y: 0.2 } }}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
@@ -397,8 +403,14 @@ export function BoardPage() {
       >
         {/* Mobile: Jira-style horizontal board — columns stay side by side,
             swipe to pan (snap per column), each column scrolls vertically.
-            md+: the usual three-column grid with page scroll. */}
-        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:snap-none md:grid-cols-3 md:overflow-visible md:pb-0">
+            Snap is suspended DURING a drag: mandatory snap turns every
+            auto-scroll nudge into a full-column jump, flinging the board from
+            the first column to the last. md+: three-column grid, page scroll. */}
+        <div
+          className={`flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 ${
+            activeTicket ? '' : 'snap-x snap-mandatory md:snap-none'
+          }`}
+        >
           {TICKET_STATUSES.map((status) => (
             <Column
               key={status}
