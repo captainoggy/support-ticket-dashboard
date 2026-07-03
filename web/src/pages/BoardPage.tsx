@@ -3,7 +3,8 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCorners,
   useDroppable,
   useSensor,
@@ -93,10 +94,10 @@ function BoardCard({
         if (event.target instanceof Element && event.target.closest('a')) return;
         navigate(`/tickets/${ticket.id}`, { state: { from } });
       }}
-      className={`rounded-lg border border-line bg-surface p-3 shadow-xs ${
+      className={`select-none rounded-lg border border-line bg-surface p-3 shadow-xs ${
         overlay
           ? 'rotate-2 shadow-lg'
-          : 'cursor-pointer touch-none transition-shadow hover:border-ink-muted hover:shadow-md active:cursor-grabbing'
+          : 'cursor-pointer touch-manipulation transition-shadow hover:border-ink-muted hover:shadow-md active:cursor-grabbing'
       } ${isDragging ? 'opacity-40' : ''}`}
     >
       <Link
@@ -135,7 +136,7 @@ function Column({
       aria-label={`${STATUS_LABELS[status]} column, ${tickets.length} tickets`}
       className={`flex min-w-0 flex-col overflow-clip rounded-xl border shadow-xs transition-colors ${
         highlighted ? 'border-accent' : 'border-line/70'
-      }`}
+      } w-[85vw] shrink-0 snap-start sm:w-80 md:w-auto md:shrink md:snap-align-none`}
     >
       {/* Sticks while scrolling a long column (overflow-clip on the container
           keeps the rounded corners without breaking position: sticky). */}
@@ -152,7 +153,7 @@ function Column({
         ref={setNodeRef}
         className={`flex grow flex-col gap-2 p-2 transition-colors ${
           highlighted ? 'bg-status-progress-bg/40' : 'bg-page'
-        }`}
+        } max-h-[65dvh] overflow-y-auto md:max-h-none md:overflow-visible`}
       >
         <SortableContext items={tickets.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tickets.map((ticket) => (
@@ -182,8 +183,11 @@ export function BoardPage() {
   const suppressClick = useRef(false);
 
   const sensors = useSensors(
-    // distance keeps plain clicks working (links stay clickable)
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // Mouse: 8px of movement starts a drag, so plain clicks still open tickets.
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    // Touch: long-press lifts a card (Jira-style), so swipes pan the board and
+    // scroll the columns instead of accidentally dragging.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -348,7 +352,10 @@ export function BoardPage() {
           },
         }}
       >
-        <div className="grid gap-4 md:grid-cols-3">
+        {/* Mobile: Jira-style horizontal board — columns stay side by side,
+            swipe to pan (snap per column), each column scrolls vertically.
+            md+: the usual three-column grid with page scroll. */}
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:snap-none md:grid-cols-3 md:overflow-visible md:pb-0">
           {TICKET_STATUSES.map((status) => (
             <Column
               key={status}

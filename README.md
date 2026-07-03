@@ -52,7 +52,7 @@ The app opens on a sign-in page; use a demo account from the table above (creden
 - Expired sessions are caught on the first 401: the app signs you out and returns you to the login page with a message
 - OpenAPI docs (Swagger UI) at `/api/docs`
 - Health endpoint, request logging (pino), helmet (CSP relaxed only for Swagger UI), CORS allowlist, login rate limiting, env validation at boot, pagination caps, graceful shutdown, non-root API container
-- Responsive: the table collapses to cards on mobile and board columns stack
+- Responsive: the table collapses to cards on mobile; the board keeps its columns side by side with horizontal swipe + per-column scrolling (Jira-style), and touch drag uses long-press so swipes pan instead of dragging
 - CI: lint + typecheck + 36 tests + production build on every push
 
 ## Local development

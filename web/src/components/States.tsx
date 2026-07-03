@@ -12,9 +12,16 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function BoardSkeleton() {
   return (
-    <div role="status" aria-label="Loading board" className="grid gap-4 md:grid-cols-3">
+    <div
+      role="status"
+      aria-label="Loading board"
+      className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0"
+    >
       {Array.from({ length: 3 }, (_, column) => (
-        <div key={column} className="overflow-hidden rounded-xl border border-line/70">
+        <div
+          key={column}
+          className="w-[85vw] shrink-0 overflow-hidden rounded-xl border border-line/70 sm:w-80 md:w-auto md:shrink"
+        >
           <div className="h-10 animate-pulse bg-line/60" />
           <div className="space-y-2 bg-page p-2">
             {Array.from({ length: 3 - (column % 2) }, (_, card) => (
