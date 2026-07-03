@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -54,6 +54,13 @@ const COLUMN_HEADERS: Record<TicketStatus, string> = {
   resolved: 'bg-status-resolved-bg text-status-resolved-text',
 };
 
+// One-shot pulse on a just-dropped card, in the destination column's color.
+const DROP_GLOW: Record<TicketStatus, string> = {
+  open: 'animate-drop-glow [--glow:var(--color-status-open-dot)]',
+  in_progress: 'animate-drop-glow [--glow:var(--color-status-progress-dot)]',
+  resolved: 'animate-drop-glow [--glow:var(--color-status-resolved-dot)]',
+};
+
 /** The board shows the top 100 tickets by rank; the list view paginates everything. */
 const BOARD_LIMIT = 100;
 
@@ -75,10 +82,13 @@ function BoardCard({
   ticket,
   overlay = false,
   suppressClick,
+  glow = null,
 }: {
   ticket: Ticket;
   overlay?: boolean;
   suppressClick?: MutableRefObject<boolean>;
+  /** Set right after a drop: pulse in the destination column's color. */
+  glow?: TicketStatus | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: ticket.id,
@@ -108,7 +118,7 @@ function BoardCard({
         overlay
           ? 'rotate-2 shadow-lg'
           : 'cursor-pointer touch-manipulation transition-shadow hover:border-ink-muted hover:shadow-md active:cursor-grabbing'
-      } ${isDragging ? 'opacity-40' : ''}`}
+      } ${isDragging ? 'opacity-40' : ''} ${glow ? DROP_GLOW[glow] : ''}`}
     >
       <Link
         to={`/tickets/${ticket.id}`}
@@ -132,17 +142,24 @@ function Column({
   tickets,
   isDropTarget,
   suppressClick,
+  sectionRef,
+  glowTicketId,
 }: {
   status: TicketStatus;
   tickets: Ticket[];
   /** True while the dragged card is previewed in this column. */
   isDropTarget: boolean;
   suppressClick: MutableRefObject<boolean>;
+  /** Lets the board pan a drop's destination column into view afterwards. */
+  sectionRef: (node: HTMLElement | null) => void;
+  /** Id of a card that just landed in this column (it gets the color pulse). */
+  glowTicketId: number | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const highlighted = isOver || isDropTarget;
   return (
     <section
+      ref={sectionRef}
       aria-label={`${STATUS_LABELS[status]} column, ${tickets.length} tickets`}
       className={`flex min-w-0 flex-col overflow-clip rounded-xl border shadow-xs transition-colors ${
         highlighted ? 'border-accent' : 'border-line/70'
@@ -163,11 +180,16 @@ function Column({
         ref={setNodeRef}
         className={`flex grow flex-col gap-2 p-2 transition-colors ${
           highlighted ? 'bg-status-progress-bg/40' : 'bg-page'
-        } max-h-[65dvh] overflow-y-auto md:max-h-none md:overflow-visible`}
+        } max-h-[65dvh] overflow-y-auto [overflow-anchor:none] md:max-h-none md:overflow-visible`}
       >
         <SortableContext items={tickets.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           {tickets.map((ticket) => (
-            <BoardCard key={ticket.id} ticket={ticket} suppressClick={suppressClick} />
+            <BoardCard
+              key={ticket.id}
+              ticket={ticket}
+              suppressClick={suppressClick}
+              glow={ticket.id === glowTicketId ? status : null}
+            />
           ))}
         </SortableContext>
         {tickets.length === 0 && (
@@ -193,6 +215,15 @@ export function BoardPage() {
   const suppressClick = useRef(false);
   // Last known drop target, reused while the pointer briefly leaves every droppable.
   const lastOverId = useRef<UniqueIdentifier | null>(null);
+  const columnRefs = useRef<Partial<Record<TicketStatus, HTMLElement>>>({});
+  // Keeps snap suspended briefly after a cross-column drop. Re-enabling it
+  // immediately makes the browser re-snap to the column it last snapped to —
+  // the SOURCE column — yanking the view away from where the card landed.
+  const [panningToDrop, setPanningToDrop] = useState(false);
+  // Just-dropped card: pulses once in its destination column's color.
+  const [dropGlow, setDropGlow] = useState<{ id: number; status: TicketStatus } | null>(null);
+  const glowTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(glowTimer.current), []);
 
   const sensors = useSensors(
     // Mouse: 8px of movement starts a drag, so plain clicks still open tickets.
@@ -330,6 +361,25 @@ export function BoardPage() {
     const sameColumn = targetStatus === ticket.status;
     if (sameColumn && position === ticket.position) return;
 
+    // Pulse the landed card in its new column's color.
+    setDropGlow({ id: ticket.id, status: targetStatus });
+    window.clearTimeout(glowTimer.current);
+    glowTimer.current = window.setTimeout(() => setDropGlow(null), 900);
+
+    if (!sameColumn) {
+      // Keep the viewport on the destination: snap stays suspended while we
+      // pan the target column into view, then re-engages onto it.
+      setPanningToDrop(true);
+      requestAnimationFrame(() => {
+        columnRefs.current[targetStatus]?.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'nearest',
+          block: 'nearest',
+        });
+        window.setTimeout(() => setPanningToDrop(false), 400);
+      });
+    }
+
     updateTicket.mutate(
       { id: ticket.id, input: sameColumn ? { position } : { status: targetStatus, position } },
       {
@@ -408,7 +458,7 @@ export function BoardPage() {
             the first column to the last. md+: three-column grid, page scroll. */}
         <div
           className={`flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 ${
-            activeTicket ? '' : 'snap-x snap-mandatory md:snap-none'
+            activeTicket || panningToDrop ? '' : 'snap-x snap-mandatory md:snap-none'
           }`}
         >
           {TICKET_STATUSES.map((status) => (
@@ -417,13 +467,24 @@ export function BoardPage() {
               status={status}
               isDropTarget={status === activeColumn}
               suppressClick={suppressClick}
+              sectionRef={(node) => {
+                if (node) columnRefs.current[status] = node;
+                else delete columnRefs.current[status];
+              }}
+              glowTicketId={dropGlow?.status === status ? dropGlow.id : null}
               tickets={columns[status]
                 .map((id) => ticketById.get(id))
                 .filter((t): t is Ticket => Boolean(t))}
             />
           ))}
         </div>
-        <DragOverlay>{activeTicket && <BoardCard ticket={activeTicket} overlay />}</DragOverlay>
+        {/* No drop animation: the live preview already shows the card in its
+            final slot, so the default "fly home" animation only travels to
+            stale coordinates (worse while the board pans) and reads as the
+            card returning to its source column. */}
+        <DragOverlay dropAnimation={null}>
+          {activeTicket && <BoardCard ticket={activeTicket} overlay />}
+        </DragOverlay>
       </DndContext>
     </div>
   );

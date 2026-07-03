@@ -55,6 +55,21 @@ button:not(:disabled),
   cursor: pointer;
 }
 
+/* Drop feedback on the board: the landed card pulses once in its column's
+   color (--glow is set per status where the class is applied). */
+@keyframes drop-glow {
+  from {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--glow) 50%, transparent);
+    border-color: var(--glow);
+  }
+  to {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.animate-drop-glow {
+  animation: drop-glow 0.9s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
