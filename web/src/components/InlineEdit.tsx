@@ -66,7 +66,7 @@ export function InlineText({
   value: string;
   label: string;
   /** 'text': the value itself is the click target. 'icon': only a pencil button
-      edits — use when the display is itself interactive (e.g. a mailto link). */
+      edits, use when the display is itself interactive (e.g. a mailto link). */
   trigger?: 'text' | 'icon';
   display?: ReactNode;
   buttonClassName?: string;
@@ -86,7 +86,7 @@ export function InlineText({
   const close = (restoreFocus: boolean) => {
     setEditing(false);
     setError(null);
-    // Only keyboard paths restore focus — a blur means the user clicked elsewhere.
+    // Only keyboard paths restore focus, a blur means the user clicked elsewhere.
     if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
   };
   const commit = (restoreFocus: boolean) => {

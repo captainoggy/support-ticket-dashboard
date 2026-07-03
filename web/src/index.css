@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Design tokens — validated palette (badge text/bg pairs all ≥ 4.5:1 on their tints). */
+/* Design tokens, validated palette (badge text/bg pairs all ≥ 4.5:1 on their tints). */
 @theme {
   --color-page: #f9f9f7;
   --color-surface: #fcfcfb;

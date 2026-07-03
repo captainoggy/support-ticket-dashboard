@@ -115,7 +115,7 @@ function BoardCard({
       }
       aria-label={`Ticket #${ticket.id}: ${ticket.title}`}
       onClick={(event) => {
-        // The whole card opens the ticket — but not the click the browser
+        // The whole card opens the ticket, but not the click the browser
         // fires right after a drag, not clicks the title link handles, and
         // not modified clicks (new tab etc.), which belong to the browser.
         if (overlay || suppressClick?.current) return;
@@ -226,8 +226,8 @@ export function BoardPage() {
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const columnRefs = useRef<Partial<Record<TicketStatus, HTMLElement>>>({});
   // Keeps snap suspended briefly after a cross-column drop. Re-enabling it
-  // immediately makes the browser re-snap to the column it last snapped to —
-  // the SOURCE column — yanking the view away from where the card landed.
+  // immediately makes the browser re-snap to the column it last snapped to,
+  // the SOURCE column, yanking the view away from where the card landed.
   const [panningToDrop, setPanningToDrop] = useState(false);
   // Just-dropped card: pulses once in its destination column's color.
   const [dropGlow, setDropGlow] = useState<{ id: number; status: TicketStatus } | null>(null);
@@ -255,7 +255,7 @@ export function BoardPage() {
   const activeColumn = activeTicket ? columnOf(columns, activeTicket.id) : null;
 
   // Pointer-first collision detection (dnd-kit's multiple-containers pattern).
-  // The column under the pointer is the target — corner-distance heuristics on
+  // The column under the pointer is the target, corner-distance heuristics on
   // a column-wide card can skip the middle column entirely on fast drags.
   const collisionDetection: CollisionDetection = (args) => {
     const pointerHits = pointerWithin(args);
@@ -461,7 +461,7 @@ export function BoardPage() {
           },
         }}
       >
-        {/* Mobile: Jira-style horizontal board — columns stay side by side,
+        {/* Mobile: Jira-style horizontal board, columns stay side by side,
             swipe to pan (snap per column), each column scrolls vertically.
             Snap is suspended DURING a drag: mandatory snap turns every
             auto-scroll nudge into a full-column jump, flinging the board from

@@ -44,7 +44,7 @@ export function useTickets(params: TicketListParams) {
   return useQuery({
     queryKey: ticketKeys.list(params),
     queryFn: () => api.get<TicketListResponse>(`/api/tickets${toQueryString(params)}`),
-    // Keep showing the previous page while the next one loads — no flash of skeleton.
+    // Keep showing the previous page while the next one loads, no flash of skeleton.
     placeholderData: keepPreviousData,
   });
 }

@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 /**
  * Live updates: the server broadcasts ticket:{created,updated,deleted} with the
  * ticket id; we simply invalidate the ticket cache and let TanStack Query
- * re-fetch through the REST API — one source of truth, two tabs stay in sync.
+ * re-fetch through the REST API, one source of truth, two tabs stay in sync.
  * The socket authenticates with the same JWT as the REST API and only exists
  * while someone is signed in.
  */

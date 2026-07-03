@@ -5,7 +5,7 @@ interface StatTile {
   label: string;
   value: number;
   dotClass: string;
-  /** Fill used while the tile's filter is active — same tokens as badges/columns. */
+  /** Fill used while the tile's filter is active, same tokens as badges/columns. */
   activeClass: string;
   active: boolean;
   onClick: () => void;
@@ -13,7 +13,7 @@ interface StatTile {
 
 /**
  * KPI row. Per the stat-tile contract: sentence-case label, semibold value in
- * ink (never in the status color — the dot carries identity). Each tile is a
+ * ink (never in the status color, the dot carries identity). Each tile is a
  * button that applies/clears the matching filter.
  */
 export function StatRow({

@@ -7,7 +7,7 @@ import { ApiError, UnauthorizedError } from '../errors.js';
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-  // Same error for unknown email and wrong password — don't leak which accounts exist.
+  // Same error for unknown email and wrong password, don't leak which accounts exist.
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     throw new UnauthorizedError('Invalid email or password');
   }

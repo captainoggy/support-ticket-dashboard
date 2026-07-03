@@ -15,8 +15,8 @@ import { ticketsRouter } from './routes/tickets.routes.js';
 export function createApp() {
   const app = express();
 
-  // One proxy hop (nginx) sets X-Forwarded-For, so req.ip — which the login
-  // rate limiter keys on — is the real client address.
+  // One proxy hop (nginx) sets X-Forwarded-For, so req.ip, which the login
+  // rate limiter keys on, is the real client address.
   app.set('trust proxy', 1);
 
   // Swagger UI relies on inline scripts, so CSP is relaxed for /api/docs only;

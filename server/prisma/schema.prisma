@@ -8,7 +8,7 @@ datasource db {
 }
 
 // Enum values are lowercase so the database, the Prisma client, and the JSON
-// API all share the exact same representation — no mapping layer anywhere.
+// API all share the exact same representation, no mapping layer anywhere.
 // Postgres orders enums by definition order, so `ORDER BY priority` is
 // semantic (low < medium < high), not alphabetical.
 enum TicketStatus {

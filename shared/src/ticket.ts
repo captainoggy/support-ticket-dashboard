@@ -39,7 +39,7 @@ export const CreateTicketSchema = z.object({
   priority: PrioritySchema,
 });
 
-/** Partial update — any editable field, but at least one. Status changes ride this too. */
+/** Partial update, any editable field, but at least one. Status changes ride this too. */
 export const UpdateTicketSchema = CreateTicketSchema.partial()
   .extend({
     status: StatusSchema.optional(),

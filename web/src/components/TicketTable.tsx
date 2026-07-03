@@ -75,7 +75,7 @@ function isInteractive(target: EventTarget): boolean {
   return target instanceof Element && Boolean(target.closest('a, button, select, input, label'));
 }
 
-/** Table on desktop, cards on mobile — same data, responsive main flow. */
+/** Table on desktop, cards on mobile, same data, responsive main flow. */
 export function TicketTable({
   tickets,
   sort,

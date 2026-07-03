@@ -30,7 +30,7 @@ export function NewTicketPage() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateTicketInput>({
-    // The same zod schema the API validates with — client and server can't drift.
+    // The same zod schema the API validates with, client and server can't drift.
     resolver: zodResolver(CreateTicketSchema),
     defaultValues: { priority: 'medium' },
   });

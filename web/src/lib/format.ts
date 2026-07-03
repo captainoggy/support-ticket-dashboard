@@ -13,7 +13,7 @@ const UNITS: Array<{ unit: Intl.RelativeTimeFormatUnit; ms: number }> = [
   { unit: 'minute', ms: 60_000 },
 ];
 
-/** "2 hours ago" — pair with formatAbsolute in a title attribute for precision. */
+/** "2 hours ago", pair with formatAbsolute in a title attribute for precision. */
 export function formatRelative(iso: string): string {
   const delta = new Date(iso).getTime() - Date.now();
   for (const { unit, ms } of UNITS) {
