@@ -2,6 +2,10 @@
 
 A support ticket dashboard where users can view, create, and update customer support tickets. Built as a small, production-minded full-stack app: React SPA, Express REST API, PostgreSQL, and a shared validation layer so the frontend and backend always agree on what a valid ticket looks like.
 
+**Live demo:** https://support-ticket-dashboard-server.vercel.app
+
+Frontend on Vercel, API on Render, database on Neon. Demo credentials are shared with the review team separately (they are never committed here). The API runs on Render's free tier, which sleeps after inactivity, so the first request can take up to a minute to wake it; every request after that is fast.
+
 ## Quick start (one command)
 
 Requires Docker.
