@@ -42,7 +42,7 @@ The app opens on a sign-in page; use a demo account from the table above (creden
 - Filtering by status and priority
 
 **Beyond core**
-- Kanban board: drag tickets between Open / In Progress / Resolved, and drop them at a specific spot. Cards can also be reordered within a column, and the order survives a refresh. Works with pointer and keyboard, with screen-reader announcements, all through the same PATCH endpoint
+- Kanban board: drag tickets between Open / In Progress / Resolved, and drop them at a specific spot. Cards can also be reordered within a column, and the order survives a refresh. Works with pointer and keyboard, with screen-reader announcements, all through the same PATCH endpoint. On drop, the landed card pulses in its new column's color and (on mobile) the board pans to the destination column
 - Clickable KPI stat row (open / in progress / resolved / high-priority open)
 - Search across title, customer name, and email; sortable column headers with direction indicators; semantic sorting (priority and status sort by meaning, not alphabetically); pagination with a 10/25/50/100 page-size picker; sticky table header
 - Filters, search, sort, and page are synced to the URL, so they survive a refresh, work with the back button, and can be shared
