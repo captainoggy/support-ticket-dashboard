@@ -37,7 +37,7 @@ import { ApiError } from '../api/client';
 import { useTickets, useUpdateTicket } from '../api/hooks';
 import { PriorityBadge } from '../components/Badges';
 import { BoardSkeleton, ErrorState } from '../components/States';
-import { useToast } from '../components/Toast';
+import { TOAST_DURATION_MS, useToast } from '../components/Toast';
 import { formatRelative } from '../lib/format';
 
 const COLUMN_DOTS: Record<TicketStatus, string> = {
@@ -103,7 +103,16 @@ function BoardCard({
     <div
       ref={overlay ? undefined : setNodeRef}
       {...(overlay ? {} : { ...listeners, ...attributes })}
-      style={overlay ? undefined : { transform: CSS.Transform.toString(transform), transition }}
+      style={
+        overlay
+          ? undefined
+          : {
+              transform: CSS.Transform.toString(transform),
+              transition,
+              // The glow lives exactly as long as the confirmation toast.
+              ...(glow ? { animationDuration: `${TOAST_DURATION_MS}ms` } : {}),
+            }
+      }
       aria-label={`Ticket #${ticket.id}: ${ticket.title}`}
       onClick={(event) => {
         // The whole card opens the ticket — but not the click the browser
@@ -361,10 +370,11 @@ export function BoardPage() {
     const sameColumn = targetStatus === ticket.status;
     if (sameColumn && position === ticket.position) return;
 
-    // Pulse the landed card in its new column's color.
+    // Glow the landed card in its new column's color for as long as the
+    // confirmation toast is on screen.
     setDropGlow({ id: ticket.id, status: targetStatus });
     window.clearTimeout(glowTimer.current);
-    glowTimer.current = window.setTimeout(() => setDropGlow(null), 900);
+    glowTimer.current = window.setTimeout(() => setDropGlow(null), TOAST_DURATION_MS);
 
     if (!sameColumn) {
       // Keep the viewport on the destination: snap stays suspended while we

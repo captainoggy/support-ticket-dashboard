@@ -55,19 +55,33 @@ button:not(:disabled),
   cursor: pointer;
 }
 
-/* Drop feedback on the board: the landed card pulses once in its column's
-   color (--glow is set per status where the class is applied). */
+/* Drop feedback on the board: the landed card blooms in its column's color,
+   holds a steady ring while the confirmation toast is visible, then fades
+   out with it (--glow is set per status; duration is set inline from
+   TOAST_DURATION_MS so the two cues stay in sync). */
 @keyframes drop-glow {
-  from {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--glow) 50%, transparent);
+  0% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--glow) 55%, transparent);
     border-color: var(--glow);
   }
-  to {
+  10% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) 40%, transparent);
+    border-color: var(--glow);
+  }
+  85% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) 40%, transparent);
+    border-color: var(--glow);
+  }
+  100% {
     box-shadow: 0 0 0 0 transparent;
+    border-color: var(--color-line);
   }
 }
 .animate-drop-glow {
-  animation: drop-glow 0.9s ease-out;
+  animation-name: drop-glow;
+  animation-timing-function: ease-out;
+  animation-duration: 4.5s; /* fallback; BoardCard sets the real value inline */
+  animation-fill-mode: both;
 }
 
 @media (prefers-reduced-motion: reduce) {

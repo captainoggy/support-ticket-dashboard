@@ -7,6 +7,10 @@ interface Toast {
   message: string;
 }
 
+/** How long a toast stays up. Other transient feedback (e.g. the board's
+    drop glow) syncs to this so related cues appear and disappear together. */
+export const TOAST_DURATION_MS = 4500;
+
 const ToastContext = createContext<{ push: (kind: Toast['kind'], message: string) => void } | null>(
   null,
 );
@@ -18,7 +22,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback((kind: Toast['kind'], message: string) => {
     const id = nextId.current++;
     setToasts((current) => [...current, { id, kind, message }]);
-    setTimeout(() => setToasts((current) => current.filter((t) => t.id !== id)), 4500);
+    setTimeout(() => setToasts((current) => current.filter((t) => t.id !== id)), TOAST_DURATION_MS);
   }, []);
 
   const value = useMemo(() => ({ push }), [push]);
