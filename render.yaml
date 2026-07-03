@@ -21,3 +21,5 @@ services:
         sync: false
       - key: CLIENT_ORIGINS
         sync: false
+      - key: DEMO_PASSWORD
+        sync: false

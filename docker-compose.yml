@@ -1,4 +1,4 @@
-# Local demo stack. The credentials below are throwaway development values —
+# Local demo stack. The credentials below are throwaway development values,
 # deploying this file anywhere public requires replacing POSTGRES_PASSWORD and
 # JWT_SECRET (the API refuses to boot in production without a real JWT_SECRET).
 services:
@@ -26,6 +26,9 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/ticketdash
       JWT_SECRET: dev-only-change-me-in-production-0123456789
+      # Set in a root .env file (compose reads it automatically) or the shell;
+      # the value is shared with reviewers separately, never committed.
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?DEMO_PASSWORD is required, put it in a .env file next to docker-compose.yml}
       PORT: 4000
       CLIENT_ORIGINS: http://localhost:8080
       NODE_ENV: development

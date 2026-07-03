@@ -283,7 +283,7 @@ export const openapiSpec = {
         type: 'object',
         properties: {
           email: { type: 'string', format: 'email', example: 'admin@demo.dev' },
-          password: { type: 'string', example: 'demo1234' },
+          password: { type: 'string', example: 'the-demo-password' },
         },
         required: ['email', 'password'],
       },

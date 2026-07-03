@@ -170,18 +170,25 @@ const tickets: Array<{
 ];
 
 async function main() {
-  // Users are upserted so demo logins always work, even on re-runs.
-  const passwordHash = await bcrypt.hash('demo1234', 10);
-  await prisma.user.upsert({
-    where: { email: 'admin@demo.dev' },
-    update: { passwordHash },
-    create: { email: 'admin@demo.dev', name: 'Ada Admin', role: 'ADMIN', passwordHash },
-  });
-  await prisma.user.upsert({
-    where: { email: 'agent@demo.dev' },
-    update: { passwordHash },
-    create: { email: 'agent@demo.dev', name: 'Alex Agent', role: 'AGENT', passwordHash },
-  });
+  // The demo password is never committed: it comes from the environment and
+  // is shared with reviewers separately. Users are upserted so demo logins
+  // always work (and the password rotates) on every boot.
+  const demoPassword = process.env.DEMO_PASSWORD;
+  if (demoPassword) {
+    const passwordHash = await bcrypt.hash(demoPassword, 10);
+    await prisma.user.upsert({
+      where: { email: 'admin@demo.dev' },
+      update: { passwordHash },
+      create: { email: 'admin@demo.dev', name: 'Ada Admin', role: 'ADMIN', passwordHash },
+    });
+    await prisma.user.upsert({
+      where: { email: 'agent@demo.dev' },
+      update: { passwordHash },
+      create: { email: 'agent@demo.dev', name: 'Alex Agent', role: 'AGENT', passwordHash },
+    });
+  } else {
+    console.warn('Seed: DEMO_PASSWORD is not set, demo users were not created/updated.');
+  }
 
   // Tickets are only seeded into an empty table so restarting the stack never
   // wipes out changes a reviewer made through the UI.
@@ -211,7 +218,7 @@ async function main() {
       };
     }),
   });
-  console.log(`Seed: created ${tickets.length} tickets and 2 demo users.`);
+  console.log(`Seed: created ${tickets.length} tickets.`);
 }
 
 main()

@@ -7,17 +7,18 @@ A support ticket dashboard where users can view, create, and update customer sup
 Requires Docker.
 
 ```bash
+echo 'DEMO_PASSWORD=<the password shared with you>' > .env
 docker compose up --build
 ```
 
 Then open **http://localhost:8080**. The stack boots Postgres, applies migrations, seeds about 15 realistic tickets and two demo users, and serves the app. The API is also exposed directly on http://localhost:4000, with interactive Swagger docs at http://localhost:4000/api/docs.
 
-| Demo user | Email | Password | Can |
-|---|---|---|---|
-| Admin | `admin@demo.dev` | `demo1234` | everything, incl. deleting tickets |
-| Agent | `agent@demo.dev` | `demo1234` | everything except delete |
+| Demo user | Can do |
+|---|---|
+| Admin | everything, incl. deleting tickets |
+| Agent | everything except delete |
 
-The app opens on a sign-in page; use a demo account from the table above (credentials are deliberately documented only here, never in the UI). Like Jira or Trello, every ticket operation (viewing, creating, updating, filtering) requires a signed-in user; deleting additionally requires the admin role. Passwords can be changed from the avatar menu; restarting the stack resets the demo passwords (the seed upserts them on boot).
+Demo credentials are **not** committed anywhere in this repository (per the brief's no-credentials rule), they are shared with the review team separately, and the seed reads the password from the `DEMO_PASSWORD` environment variable. The app opens on a sign-in page. Like Jira or Trello, every ticket operation (viewing, creating, updating, filtering) requires a signed-in user; deleting additionally requires the admin role. Passwords can be changed from the avatar menu; restarting the stack resets them to `DEMO_PASSWORD` (the seed upserts demo users on boot).
 
 ## Technologies
 
@@ -61,7 +62,7 @@ Prereqs: Node 20+, Docker (for Postgres only).
 
 ```bash
 npm install                 # installs all workspaces
-cp .env.example server/.env # local API config (dev-only defaults)
+cp .env.example server/.env # local API config, set DEMO_PASSWORD inside
 npm run db:up               # start Postgres (host port 5433)
 npm run db:migrate          # apply migrations   (npm -w server run db:migrate)
 npm run db:seed             # seed tickets + demo users
@@ -117,9 +118,9 @@ Errors are consistent JSON: `{ "error": "...", "details": [{ "field", "message" 
 Hosted as three free pieces: the frontend on **Vercel**, the API on **Render** (Dockerized, kept as a long-running service for WebSockets), and Postgres on **Neon** (unlike Render's free Postgres, it doesn't expire). The frontend reads `VITE_API_URL` at build time; when unset (local dev, Docker), everything stays same-origin behind the proxy. Config lives in [vercel.json](vercel.json) and [render.yaml](render.yaml).
 
 1. **Database (Neon)**: create a free project at neon.tech and copy the connection string (it already includes `sslmode=require`).
-2. **API (Render)**: New → Blueprint → connect the repo. Render reads `render.yaml` and creates `ticketdash-api` (`JWT_SECRET` is generated automatically). Set `DATABASE_URL` to the Neon string and deploy; note the service URL (e.g. `https://ticketdash-api.onrender.com`). The API applies migrations and seeds demo data on first boot.
+2. **API (Render)**: New → Blueprint → connect the repo. Render reads `render.yaml` and creates `ticketdash-api` (`JWT_SECRET` is generated automatically). Set `DATABASE_URL` to the Neon string and `DEMO_PASSWORD` to the value shared with reviewers, then deploy; note the service URL (e.g. `https://ticketdash-api.onrender.com`). The API applies migrations and seeds demo data on first boot.
 3. **Frontend (Vercel)**: New Project → import the repo (keep the root directory as the repo root; `vercel.json` handles the monorepo build and SPA routing). Add an env var `VITE_API_URL` = the Render API URL, then deploy; note the Vercel URL (e.g. `https://<project>.vercel.app`).
-4. **Connect CORS**: back on Render, set `CLIENT_ORIGINS` to the Vercel URL and redeploy the API. Sign in with the demo users above.
+4. **Connect CORS**: back on Render, set `CLIENT_ORIGINS` to the Vercel URL and redeploy the API. Sign in with the demo credentials shared separately.
 
 Free-tier caveat: the Render API sleeps after ~15 minutes idle, so the first request can take up to a minute to wake it. The Vercel frontend is always instant and shows its loading state while the API wakes.
 
@@ -145,5 +146,6 @@ Free-tier caveat: the Render API sleeps after ~15 minutes idle, so the first req
 - Per-column pagination/virtualization on the board and bulk actions on the list
 - Periodic renormalization of board positions (rewrite a column's ranks to integers)
 - Ticket assignment to agents, email notifications, saved filter views
+- Admin panel: user management (invite agents, change roles, deactivate accounts) plus the support-desk equivalents of sprints, meaning queues, assignment rules, and SLA targets
 - Observability: structured request ids, metrics, error tracking (Sentry)
 - Deployment (Fly.io/Render/Railway): both images are ready; add TLS and managed Postgres

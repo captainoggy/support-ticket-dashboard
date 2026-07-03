@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 /**
  * The whole dashboard sits behind sign-in, so this doubles as the landing
  * page: a short product pitch next to the form. Demo credentials live in the
- * README, not here — a login page must never advertise working credentials.
+ * README, not here, a login page must never advertise working credentials.
  */
 
 const HIGHLIGHTS = [
@@ -93,7 +93,7 @@ export function LoginPage() {
           <div>
             <h2 className="text-lg font-semibold">Sign in</h2>
             <p className="mt-0.5 text-sm text-ink-secondary">
-              Demo accounts are listed in the project README.
+              Use the demo credentials shared with the review team.
             </p>
           </div>
           {error && (

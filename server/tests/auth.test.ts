@@ -7,8 +7,11 @@ import { authHeader } from './helpers';
 
 const app = createApp();
 
+// Test-only fixture password, unrelated to any real demo credential.
+const TEST_PASSWORD = 'test-only-pass-1';
+
 async function seedUsers() {
-  const passwordHash = await bcrypt.hash('demo1234', 4); // low cost: it's a test
+  const passwordHash = await bcrypt.hash(TEST_PASSWORD, 4); // low cost: it's a test
   await prisma.user.createMany({
     data: [
       { email: 'admin@demo.dev', name: 'Ada Admin', role: 'ADMIN', passwordHash },
@@ -20,7 +23,7 @@ async function seedUsers() {
 async function login(email: string): Promise<string> {
   const response = await request(app)
     .post('/api/auth/login')
-    .send({ email, password: 'demo1234' });
+    .send({ email, password: TEST_PASSWORD });
   return response.body.token;
 }
 
@@ -41,7 +44,7 @@ describe('POST /api/auth/login', () => {
   it('returns a token and the user for valid credentials', async () => {
     const response = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@demo.dev', password: 'demo1234' });
+      .send({ email: 'admin@demo.dev', password: TEST_PASSWORD });
 
     expect(response.status).toBe(200);
     expect(response.body.token).toBeTruthy();
@@ -55,7 +58,7 @@ describe('POST /api/auth/login', () => {
       .send({ email: 'admin@demo.dev', password: 'nope' });
     const unknownEmail = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'ghost@demo.dev', password: 'demo1234' });
+      .send({ email: 'ghost@demo.dev', password: TEST_PASSWORD });
 
     expect(wrongPassword.status).toBe(401);
     expect(unknownEmail.status).toBe(401);
@@ -83,7 +86,7 @@ describe('POST /api/auth/change-password', () => {
   it('requires authentication', async () => {
     const response = await request(app)
       .post('/api/auth/change-password')
-      .send({ currentPassword: 'demo1234', newPassword: 'brand-new-pass' });
+      .send({ currentPassword: TEST_PASSWORD, newPassword: 'brand-new-pass' });
     expect(response.status).toBe(401);
   });
 
@@ -102,13 +105,13 @@ describe('POST /api/auth/change-password', () => {
     const ok = await request(app)
       .post('/api/auth/change-password')
       .set('Authorization', `Bearer ${token}`)
-      .send({ currentPassword: 'demo1234', newPassword: 'brand-new-pass' });
+      .send({ currentPassword: TEST_PASSWORD, newPassword: 'brand-new-pass' });
     expect(ok.status).toBe(204);
 
     // The old password no longer works; the new one does.
     const oldLogin = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'agent@demo.dev', password: 'demo1234' });
+      .send({ email: 'agent@demo.dev', password: TEST_PASSWORD });
     expect(oldLogin.status).toBe(401);
     const newLogin = await request(app)
       .post('/api/auth/login')
@@ -121,7 +124,7 @@ describe('POST /api/auth/change-password', () => {
     const response = await request(app)
       .post('/api/auth/change-password')
       .set('Authorization', `Bearer ${token}`)
-      .send({ currentPassword: 'demo1234', newPassword: 'short' });
+      .send({ currentPassword: TEST_PASSWORD, newPassword: 'short' });
     expect(response.status).toBe(400);
     expect(response.body.details).toEqual(
       expect.arrayContaining([expect.objectContaining({ field: 'newPassword' })]),
