@@ -5,12 +5,21 @@ import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  closestCorners,
+  closestCenter,
+  getFirstCollision,
+  pointerWithin,
+  rectIntersection,
   useDroppable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
+import type {
+  CollisionDetection,
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  UniqueIdentifier,
+} from '@dnd-kit/core';
 import {
   SortableContext,
   arrayMove,
@@ -181,6 +190,8 @@ export function BoardPage() {
   const crossedColumns = useRef(false);
   // Blocks the synthetic click the browser fires on the card right after a drag.
   const suppressClick = useRef(false);
+  // Last known drop target, reused while the pointer briefly leaves every droppable.
+  const lastOverId = useRef<UniqueIdentifier | null>(null);
 
   const sensors = useSensors(
     // Mouse: 8px of movement starts a drag, so plain clicks still open tickets.
@@ -202,6 +213,37 @@ export function BoardPage() {
   // The column the dragged card is currently previewed in gets the drop glow.
   const activeColumn = activeTicket ? columnOf(columns, activeTicket.id) : null;
 
+  // Pointer-first collision detection (dnd-kit's multiple-containers pattern).
+  // The column under the pointer is the target — corner-distance heuristics on
+  // a column-wide card can skip the middle column entirely on fast drags.
+  const collisionDetection: CollisionDetection = (args) => {
+    const pointerHits = pointerWithin(args);
+    const hits = pointerHits.length > 0 ? pointerHits : rectIntersection(args);
+    let overId = getFirstCollision(hits, 'id');
+
+    if (overId != null) {
+      if (TICKET_STATUSES.includes(overId as TicketStatus)) {
+        // Over a column's empty space: retarget to its closest card so the
+        // insertion index stays precise (the column itself means "append").
+        const ids = columns[overId as TicketStatus];
+        if (ids.length > 0) {
+          const closest = closestCenter({
+            ...args,
+            droppableContainers: args.droppableContainers.filter(
+              (container) => container.id !== overId && ids.includes(Number(container.id)),
+            ),
+          });
+          overId = getFirstCollision(closest, 'id') ?? overId;
+        }
+      }
+      lastOverId.current = overId;
+      return [{ id: overId }];
+    }
+    // Nothing under the pointer (fast drag past an edge): keep the last target
+    // so the card doesn't snap home mid-gesture.
+    return lastOverId.current != null ? [{ id: lastOverId.current }] : [];
+  };
+
   const resetDrag = () => {
     setActiveTicket(null);
     setDragColumns(null);
@@ -217,6 +259,7 @@ export function BoardPage() {
     setDragColumns(deriveColumns(tickets));
     crossedColumns.current = false;
     suppressClick.current = true;
+    lastOverId.current = null;
   };
 
   /** Reparent the dragged card into the hovered column (preview only). */
@@ -322,7 +365,7 @@ export function BoardPage() {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetection}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
